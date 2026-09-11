@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Oh!国 大型画面</title>
+<link rel="stylesheet" href="ohk.css">
+<style>
+body{background:#0D0D0F;color:#fff;padding:0}
+main{max-width:1100px;padding:34px}
+.scr-ph{font-size:56px;font-weight:800;letter-spacing:.02em}
+.scr-rem{font-size:26px;color:#FF7A8A;font-variant-numeric:tabular-nums}
+.card{background:#17171B;border-color:#2A2A30}
+.big2{font-size:88px;font-weight:800;line-height:1.1}
+.rushT{font-size:26px;font-weight:800;color:#FF7A8A}
+.gauge{height:30px;background:#2A2A30}
+.kv{border-color:#2A2A30}
+.note{color:#9A9AA2}
+</style>
+</head><body>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px">
+    <div><span style="color:#FF2E47;font-weight:800;letter-spacing:.2em">OH!KOKU</span>
+      <div class="scr-ph" id="ph">—</div></div>
+    <div class="scr-rem" id="rem"></div>
+  </div>
+  <div id="rush"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:20px">国家繁栄度</b><span class="big2" id="pt">0</span></div>
+    <div class="gauge"><div id="pg" style="width:0%"></div></div>
+    <div style="display:flex;gap:26px;margin-top:12px" id="pparts"></div>
+  </div>
+  <div class="card" id="mkt"></div>
+  <div class="card" id="awards" style="display:none"></div>
+</main>
+<script src="ohk.js"></script>
+<script>
+async function loop(){
+  try{
+    const s=await rpc("rpc_screen",{});
+    const defs=await loadPhaseDefs(); EV=null; const ev=await loadEvent();
+    const c=calcPhase(ev,defs);
+    document.getElementById("ph").textContent=c.ph.label;
+    document.getElementById("rem").textContent=remainStr(c.remain);
+    const p=s.prosperity;
+    document.getElementById("pt").textContent=p.total;
+    document.getElementById("pg").style.width=p.total+"%";
+    document.getElementById("pparts").innerHTML=
+      "<span>経済 <b>"+p.economy+"/40</b></span><span>国家危機 <b>"+p.crisis+"/30</b></span><span>団結 <b>"+p.unity+"/30</b></span>";
+    if(s.rush){
+      document.getElementById("rush").innerHTML=
+        '<div class="card" style="border-color:#FF2E47;text-align:center"><div class="rushT">🔥 '+s.rush.name+'</div>'+
+        '<div class="big2"><span id="rc">'+(s.rush.counted||0)+'</span> <span style="font-size:36px;color:#9A9AA2">/ '+s.rush.target+'組</span></div>'+
+        '<p class="note">友達をつくれ!アプリの「ともだち」からお互いの番号を入力(または申請OK)で成立</p></div>';
+    } else document.getElementById("rush").innerHTML="";
+    const open=s.market&&s.market.enabled&&s.market.window>0&&!s.market.closed;
+    document.getElementById("mkt").innerHTML='<b style="font-size:18px">📈 Oh!証券 '+(s.market.closed?"(終値確定)":(open?"市場"+s.market.window+" 開場中":""))+'</b>'+
+      '<div style="display:flex;gap:30px;margin-top:10px;flex-wrap:wrap">'+
+      s.market.companies.map(x=>'<div><div class="note">'+x.code+" "+x.name+'</div><div style="font-size:34px;font-weight:800">'+fmt(x.price)+'</div></div>').join("")+"</div>";
+    if(c.ph.id==="RESULTS"||c.ph.id==="CLOSED"){
+      const a=await rpc("rpc_awards",{});
+      const N={richest:"👑 総資産",riser:"🚀 成り上がり",investor:"📈 投資家",spender:"🛍 消費王",worker:"💪 働き者",popular:"🤝 人気者"};
+      const box=document.getElementById("awards"); box.style.display="block";
+      box.innerHTML='<b style="font-size:20px">表彰</b>'+Object.keys(N).map(k=>{
+        const t=(a[k]&&a[k][0])||null;
+        return '<div class="kv"><span>'+N[k]+'</span><b style="font-size:20px">'+(t? t.display_name+"("+t.department_id+")":"—")+'</b></div>';}).join("");
+    }
+  }catch(e){}
+  setTimeout(loop,4000);
+}
+loop();
+</script>
+</body></html>

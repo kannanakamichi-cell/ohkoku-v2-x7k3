@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Oh!国 ラジオ</title>
+<link rel="stylesheet" href="ohk.css">
+</head><body>
+<header><div class="ttl"><i>!</i> Oh!国営放送(メディア局)</div><div class="ph" id="hph">—</div></header>
+<main>
+  <p class="note">フェーズが変わると読み上げキューが届きます。読んだらチェック(チェックはこの端末のメモ)。</p>
+  <div class="card list" id="cues">待機中…</div>
+  <h2 class="sec">読み上げ台本の例</h2>
+  <div class="card note">
+    T01: 「初期勤務のみなさん、持ち場へどうぞ!」<br>
+    L01/L02: 「国民昼休みです。お弁当屋へ!基本弁当は無料、1人1個です」<br>
+    E01: 「国家事件発生!孤独の危機!制限時間内に友達をつくれ!」<br>
+    E03: 「国家事件!部署の壁!他部署の友達をつくれ!レア部署は2組ぶん!」<br>
+    F01: 「ラストオーダー!株の終値まもなく確定!」<br>
+    S01: 「集計に入ります。取引はここまで!」<br>
+    R01: 「表彰式をはじめます!」
+  </div>
+</main>
+<div id="toast"></div>
+<script src="ohk.js"></script>
+<script>
+let done={};
+try{done=JSON.parse(localStorage.getItem("ohk_r")||"{}")}catch(e){}
+async function loop(){
+  try{
+    const defs=await loadPhaseDefs(); EV=null; const ev=await loadEvent();
+    const c=calcPhase(ev,defs);
+    document.getElementById("hph").innerHTML=c.ph.label+"<br>"+remainStr(c.remain);
+    const cues=await tbl("broadcast_cue?select=*&order=id.desc&limit=12");
+    document.getElementById("cues").innerHTML=cues.length? cues.map(q=>
+      '<div><span><b>'+q.code+'</b> <span class="note">'+(q.body||"")+"("+new Date(q.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+')</span></span>'+
+      '<button class="pill '+(done[q.id]?"on":"")+'" onclick="chk('+q.id+')">'+(done[q.id]?"✅ 読了":"未読")+'</button></div>').join("") : "待機中…";
+  }catch(e){}
+  setTimeout(loop,4000);
+}
+function chk(id){ done[id]=!done[id]; try{localStorage.setItem("ohk_r",JSON.stringify(done))}catch(e){}; loop(); }
+loop();
+</script>
+</body></html>

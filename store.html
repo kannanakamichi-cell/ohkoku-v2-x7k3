@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Oh!国 店舗レジ</title>
+<link rel="stylesheet" href="ohk.css">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head><body>
+<header><div class="ttl"><i>!</i> 店舗レジ <span id="hfac" style="font-size:12px;color:#ccc"></span></div><div class="ph" id="hph">—</div></header>
+<main>
+
+<section class="screen on" id="s-login">
+  <div class="card">
+    <h3>店舗キーでログイン</h3>
+    <p class="note">キー一覧の f01-xxxx 形式のキーを入力(銀行担当は f13 のキー)。</p>
+    <input id="l-key" placeholder="f03-xxxx" autocapitalize="off">
+    <button class="btn pri" onclick="login()">🧾 レジを開く</button>
+  </div>
+</section>
+
+<section class="screen" id="s-main">
+  <div class="card" id="statusCard"></div>
+
+  <h2 class="sec">💼 勤務の受付</h2>
+  <div class="card">
+    <div class="row">
+      <input id="w-no" inputmode="numeric" placeholder="市民番号">
+      <button class="btn mini dark" style="margin:0;padding:12px" onclick="startScan(no=>$('w-no').value=no)">📷</button>
+    </div>
+    <div class="row">
+      <button class="btn dark" onclick="shift('start')">勤務スタート</button>
+      <button class="btn ghost" onclick="shift('done')">完了(給与500)</button>
+    </div>
+    <p class="note">フェーズが切り替わると勤務中の人は自動で完了・給与振込されます。</p>
+  </div>
+
+  <h2 class="sec">🛒 お会計</h2>
+  <div class="card">
+    <label>商品</label>
+    <select id="p-sel"></select>
+    <div class="row">
+      <div><label>お客様の市民番号</label><input id="p-no" inputmode="numeric" placeholder="101"></div>
+      <button class="btn mini dark" style="margin:0;padding:12px" onclick="startScan(no=>$('p-no').value=no)">📷</button>
+    </div>
+    <label>数量</label>
+    <input id="p-qty" inputmode="numeric" value="1">
+    <button class="btn pri" onclick="sell()">🧾 会計する</button>
+    <p class="note" id="sellnote">601コイン以上はお客様のスマホに承認画面が出ます(60秒)。</p>
+  </div>
+
+  <h2 class="sec">🔍 市民の照会</h2>
+  <div class="card">
+    <div class="row">
+      <input id="q-no" inputmode="numeric" placeholder="市民番号">
+      <button class="btn mini dark" style="margin:0;padding:12px" onclick="lookup()">照会</button>
+    </div>
+    <div id="q-out"></div>
+  </div>
+
+  <div id="pairBox" style="display:none">
+    <h2 class="sec">⭐️ ペアクエストの記録</h2>
+    <div class="card">
+      <p class="note" id="pairdesc"></p>
+      <div class="row">
+        <input id="pq1" inputmode="numeric" placeholder="1人目の番号">
+        <input id="pq2" inputmode="numeric" placeholder="2人目の番号">
+      </div>
+      <button class="btn dark" onclick="pairQuest()">2人に達成を記録</button>
+    </div>
+  </div>
+
+  <div id="bankBox" style="display:none">
+    <h2 class="sec">🏦 銀行窓口</h2>
+    <div class="card">
+      <label>銀行キー(bank-xxxxxx)</label>
+      <input id="b-key" placeholder="bank-xxxxxx" autocapitalize="off">
+      <div class="row">
+        <input id="b-no" inputmode="numeric" placeholder="市民番号">
+        <input id="b-amt" inputmode="numeric" placeholder="金額(100単位)">
+      </div>
+      <label>理由(補正は必須)</label>
+      <input id="b-note" placeholder="例: 誤会計の返金">
+      <div class="row">
+        <button class="btn pri" onclick="bank('relief',1)">救済給付</button>
+        <button class="btn dark" onclick="bank('correction',1)">補正 +</button>
+        <button class="btn ghost" onclick="bank('correction',-1)">補正 −</button>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">在庫</h2>
+  <div class="card list" id="stocks"></div>
+  <button class="btn ghost" onclick="clearS('ohk_s');location.reload()">退出</button>
+</section>
+
+</main>
+<script src="ohk.js"></script>
+<script>
+document.write(scanOverlayHTML());
+let KEY=null, FID=null, FAC=null, PRODS=[];
+const PAIR={F06:"🥊 ライバル:他部署の2人が対戦したら記録(+50/人)",F03:"☕️ 相席:他部署の2人が一緒に注文したら記録(+30/人)",F10:"🏀 ダブルス:他部署の2人がペア挑戦したら記録(+50/人)"};
+
+async function login(){
+  const k=$("l-key").value.trim(); if(!k) return toast("店舗キーを入力",1);
+  try{ await rpc("rpc_lookup",{p_staff_key:k,p_no:"__check__"}); }
+  catch(e){
+    if(/店舗キー/.test(e.message)) return toast(e.message,1);
+    // 「市民番号が見つかりません」=キーは正しい
+  }
+  KEY=k; FID=k.split("-")[0].toUpperCase();
+  saveS("ohk_s",{k}); enter();
+}
+async function enter(){
+  $("s-login").classList.remove("on"); $("s-main").classList.add("on");
+  const fs=await tbl("facility?select=id,name,booth,note&id=eq."+FID);
+  FAC=fs[0]||{name:FID};
+  $("hfac").textContent=FAC.name;
+  if(PAIR[FID]){ $("pairBox").style.display="block"; $("pairdesc").textContent=PAIR[FID]; }
+  if(FID==="F13"){ $("bankBox").style.display="block"; const bs=loadS("ohk_b"); if(bs)$("b-key").value=bs.k; }
+  await loadProds(); poll(); setInterval(poll,5000);
+}
+async function loadProds(){
+  PRODS=await tbl("product?select=id,name,price,stock,per_person_limit&facility_id=eq."+FID+"&active=eq.true&order=id.asc");
+  $("p-sel").innerHTML=PRODS.map(p=>'<option value="'+p.id+'">'+p.name+"("+fmt(p.price)+")</option>").join("")||"<option>商品なし</option>";
+  $("stocks").innerHTML=PRODS.map(p=>'<div><span>'+p.name+(p.per_person_limit?' <span class="tag">1人'+p.per_person_limit+'個</span>':"")+'</span><span class="amt">'+fmt(p.price)+' ／ 残'+p.stock+'</span></div>').join("");
+}
+async function poll(){
+  try{
+    const defs=await loadPhaseDefs(); const ev=await loadEvent();
+    const c=calcPhase(ev,defs);
+    $("hph").innerHTML=c.ph.label+"<br>"+remainStr(c.remain)+(ev.paper_mode?' <span style="color:#FFB3BC">📄紙モード</span>':"");
+    const st=await rpc("rpc_facilities",{});
+    const mine=st.find(x=>x.id===FID);
+    $("statusCard").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>'+FAC.name+'('+(FAC.booth||"")+')</b>'+
+      (mine? (mine.status==="OPEN"?'<span class="tag red">営業中</span>':'<span class="tag gray">閉店中</span>')+' <span class="amt">勤務 '+mine.working+"/"+mine.cap+'</span>' : '<span class="tag gray">公共施設</span>')+'</div>';
+    loadProds();
+  }catch(e){}
+}
+async function shift(mode){
+  const no=$("w-no").value.trim(); if(!no) return toast("市民番号を入力",1);
+  try{
+    if(mode==="start"){ const r=await rpc("rpc_start_shift",{p_key:KEY,p_no:no}); toast("💼 "+r.name+"さん 勤務スタート"); }
+    else { await rpc("rpc_complete_shift",{p_key:KEY,p_no:no}); toast("✅ 完了。給与500を振り込みました"); }
+    $("w-no").value=""; poll();
+  }catch(e){ toast(e.message,1); }
+}
+async function sell(){
+  const no=$("p-no").value.trim(), pid=parseInt($("p-sel").value,10), qty=parseInt($("p-qty").value||"1",10);
+  if(!no) return toast("市民番号を入力",1);
+  try{
+    const r=await rpc("rpc_purchase",{p_key:KEY,p_no:no,p_product:pid,p_qty:qty});
+    if(r.mode==="pending") toast("💳 お客様のスマホで承認待ち(60秒)…");
+    else if(r.mode==="free") toast("✅ 無料でお渡し(在庫を引きました)");
+    else toast("✅ お会計完了");
+    $("p-no").value=""; $("p-qty").value="1"; loadProds();
+  }catch(e){ toast(e.message,1); }
+}
+async function lookup(){
+  const no=$("q-no").value.trim(); if(!no) return;
+  try{ const r=await rpc("rpc_lookup",{p_staff_key:KEY,p_no:no});
+    $("q-out").innerHTML='<div class="kv"><span><b>'+r.name+'</b>('+r.dept+')</span><span class="amt">'+fmt(r.balance)+'コイン</span></div>'+(r.working?'<p class="note">💼 '+r.working+'で勤務中</p>':"");
+  }catch(e){ toast(e.message,1); }
+}
+async function pairQuest(){
+  const a=$("pq1").value.trim(), b=$("pq2").value.trim();
+  if(!a||!b) return toast("2人の番号を入力",1);
+  try{ await rpc("rpc_pair_quest",{p_key:KEY,p_no1:a,p_no2:b});
+    toast("⭐️ 2人にクエスト達成を記録しました"); $("pq1").value="";$("pq2").value="";
+  }catch(e){ toast(e.message,1); }
+}
+async function bank(kind,sign){
+  const bk=$("b-key").value.trim(), no=$("b-no").value.trim();
+  let amt=parseInt($("b-amt").value||"0",10)*(kind==="correction"?sign:1);
+  if(!bk||!no||!amt) return toast("キー・番号・金額を入力",1);
+  saveS("ohk_b",{k:bk});
+  try{ const r=await rpc("rpc_bank",{p_key:bk,p_no:no,p_amount:amt,p_kind:kind,p_note:$("b-note").value.trim()});
+    toast("🏦 完了。残高 "+fmt(r.balance)+"コイン"); $("b-amt").value="";
+  }catch(e){ toast(e.message,1); }
+}
+(()=>{ const s=loadS("ohk_s"); if(s){ KEY=s.k; FID=s.k.split("-")[0].toUpperCase(); enter(); } })();
+</script>
+</body></html>

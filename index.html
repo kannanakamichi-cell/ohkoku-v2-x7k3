@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Oh!国</title>
+<link rel="stylesheet" href="ohk.css">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head><body>
+<header>
+  <div class="ttl"><i>!</i> Oh!国</div>
+  <div class="ph" id="hph">—</div>
+</header>
+<main>
+
+<section class="screen on" id="s-login">
+  <div class="card" style="text-align:center;padding:26px 16px">
+    <div style="font-size:40px">🏛</div>
+    <h3 style="margin:8px 0 4px">Oh!国へようこそ</h3>
+    <p class="note">名札の市民番号でログイン。初めての人は、好きな4桁のPINを決めて入力すると入国できます。</p>
+    <label style="text-align:left">市民番号</label>
+    <input id="l-no" inputmode="numeric" placeholder="101">
+    <label style="text-align:left">PIN(4桁)</label>
+    <input id="l-pin" inputmode="numeric" maxlength="4" placeholder="はじめての人はここで決める">
+    <button class="btn pri" onclick="login()">🛂 入国 / ログイン</button>
+  </div>
+</section>
+
+<section class="screen" id="s-home">
+  <div id="alerts"></div>
+  <div class="card" id="fortuneCard" style="display:none"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div><b id="myname">—</b><span class="note" id="mymeta" style="display:block"></span></div>
+      <div style="text-align:right"><div class="big amt" id="bal">—</div><span class="note">コイン</span></div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;margin-top:10px">
+      <div class="qr" id="myqr"></div>
+      <p class="note">これがあなたの名札QRの代わり。<b>友達交換</b>のとき相手にスキャンしてもらえます(番号:<b id="myno2">—</b>)</p>
+    </div>
+  </div>
+  <div class="card" id="shiftCard" style="display:none"></div>
+  <h2 class="sec">お知らせ</h2>
+  <div class="card list" id="notif"><p class="note">まだありません</p></div>
+</section>
+
+<section class="screen" id="s-work">
+  <div class="card" id="myinit"></div>
+  <h2 class="sec">お店の空き状況</h2>
+  <div class="card list" id="facl">読み込み中…</div>
+  <p class="note">勤務の開始・完了はお店の店長さんの端末で行います。行きたい店に向かって「働きたいです」と伝えてください。1シフト12分、給与は全店500コイン。</p>
+</section>
+
+<section class="screen" id="s-mkt">
+  <div class="card" id="mktbox">読み込み中…</div>
+  <h2 class="sec">保有株</h2>
+  <div class="card list" id="holds"><p class="note">まだ持っていません</p></div>
+  <p class="note">売買できるのは市場タイム(自由勤務1・2・3)だけ。1つの市場で買い1回・売り1回、1回10株まで。株価はみんなの売買で動き、ラストオーダーで終値が確定します。</p>
+</section>
+
+<section class="screen" id="s-frd">
+  <div class="card">
+    <label>相手の市民番号</label>
+    <div class="row">
+      <input id="f-no" inputmode="numeric" placeholder="102">
+      <button class="btn mini dark" style="margin:0;padding:12px" onclick="startScan(no=>{$('f-no').value=no;friendReq();})">📷 スキャン</button>
+    </div>
+    <button class="btn pri" onclick="friendReq()">🤝 友達申請(お互い入力で成立)</button>
+    <p class="note">相手も同時にあなたの番号を入れると、その場で成立。片方だけなら相手に通知が届き、3分以内にOKすれば成立します。</p>
+  </div>
+  <div class="card">
+    <div class="kv"><span>友達の数</span><b id="fcount">0人</b></div>
+    <div style="margin-top:8px"><span class="note">部署スタンプ:</span><span id="fdepts"></span></div>
+  </div>
+  <h2 class="sec">称号</h2>
+  <div class="card list" id="titles"><p class="note">友達5人で最初の称号!</p></div>
+</section>
+
+<section class="screen" id="s-qst">
+  <h2 class="sec">クエスト(各1回・全達成でOh!国マスター)</h2>
+  <div class="card list" id="quests"></div>
+</section>
+
+</main>
+<nav id="cnav" style="display:none">
+  <button data-s="home" class="on"><span>🏠</span>ホーム</button>
+  <button data-s="work"><span>💼</span>はたらく</button>
+  <button data-s="mkt"><span>📈</span>とうし</button>
+  <button data-s="frd"><span>🤝</span>ともだち</button>
+  <button data-s="qst"><span>⭐️</span>クエスト</button>
+</nav>
+<div class="popwrap" id="pop"><div class="pop">
+  <span class="badge" id="pop-badge">Oh!国</span>
+  <h3 id="pop-title"></h3><p id="pop-body"></p>
+  <button class="btn dark" onclick="$('pop').style.display='none'">OK</button>
+</div></div>
+<script src="ohk.js"></script>
+<script>
+document.write(scanOverlayHTML());
+
+let me=null, sess=loadS("ohk_c"), lastNotif=0, firstMe=true;
+const QUESTS=[
+ ["rival","🥊 ライバル","ベイブレードで他部署の人と対戦(店長が記録)","+50"],
+ ["table","☕️ 相席","カフェで他部署の人と一緒に注文(店長が記録)","+30"],
+ ["doubles","🏀 ダブルス","運動ブースで他部署の人とペア挑戦(店長が記録)","+50"],
+ ["jobhop","💼 転職王","3つの違う店で勤務を完了","+50"],
+ ["allwork","👥 全員出勤","チームの出席者全員が自由勤務を完了","+50"],
+ ["coinvest","🤝 共同投資","同じ市場で同じ銘柄を買った他部署の人がいる","+30"]];
+
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+    $("s-"+b.dataset.s).classList.add("on");
+    if(b.dataset.s==="work") renderFacilities();
+    if(b.dataset.s==="mkt") renderMarket();
+  };
+});
+
+async function login(){
+  const no=$("l-no").value.trim(), pin=$("l-pin").value.trim();
+  if(!no||!pin) return toast("番号とPINを入力してください",1);
+  try{
+    me = await rpc("rpc_login",{p_no:no,p_pin:pin});
+    saveS("ohk_c",{no,pin}); sess={no,pin};
+    enter();
+  }catch(e){ toast(e.message,1); }
+}
+function enter(){
+  $("s-login").classList.remove("on");
+  $("s-home").classList.add("on");
+  $("cnav").style.display="flex";
+  render(); startPoll();
+}
+async function refresh(){
+  if(!sess) return;
+  try{ me = await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); render(); }
+  catch(e){}
+}
+let pollT=null;
+function startPoll(){ if(pollT)clearInterval(pollT); pollT=setInterval(refresh,3000); }
+
+function render(){
+  if(!me) return;
+  const m=me.me;
+  $("hph").innerHTML = (me.phase?me.phase.label:"—") + "<br>" + (me.paper?'<span style="color:#FFB3BC">📄紙モード中</span>':"");
+  $("myname").textContent = m.name;
+  $("mymeta").textContent = m.dept+" ／ 市民番号 "+m.no+(m.team?" ／ チーム"+m.team:"");
+  $("bal").textContent = fmt(me.balance);
+  $("myno2").textContent = m.no;
+  if(window.QRCode){ const q=$("myqr"); if(q.dataset.no!==m.no){ q.innerHTML=""; new QRCode(q,{text:"OHK:"+m.no,width:74,height:74}); q.dataset.no=m.no; } }
+  if(m.fortune){
+    $("fortuneCard").style.display="block";
+    $("fortuneCard").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>あなたの人生:'+m.fortune+'</b><span class="note">初期資産 '+fmt(m.initialAsset)+'</span></div>';
+  }
+  // 承認待ち・友達申請カード
+  let al="";
+  (me.pendingTx||[]).forEach(t=>{
+    al+='<div class="card" style="border-color:var(--ac)"><b>💳 支払いの確認</b><p class="note">'+t.note+' ── '+fmt(t.amount)+'コイン</p><div class="row"><button class="btn pri" style="margin-top:8px" onclick="approve('+t.id+',true)">承認して支払う</button><button class="btn ghost" style="margin-top:8px" onclick="approve('+t.id+',false)">キャンセル</button></div></div>';
+  });
+  (me.pendingFriend||[]).forEach(f=>{
+    al+='<div class="card" style="border-color:var(--ac)"><b>🤝 '+f.from+'さんから友達申請</b><div class="row"><button class="btn pri" style="margin-top:8px" onclick="frespond('+f.id+',true)">OK!</button><button class="btn ghost" style="margin-top:8px" onclick="frespond('+f.id+',false)">ごめん</button></div></div>';
+  });
+  $("alerts").innerHTML=al;
+  // 勤務中
+  if(me.shift){ $("shiftCard").style.display="block";
+    $("shiftCard").innerHTML='<b>💼 勤務中:'+me.shift.name+'</b><p class="note">フェーズ終了で自動的に完了し、給与500コインが振り込まれます(店長の完了操作でも可)</p>';
+  } else $("shiftCard").style.display="none";
+  // 通知
+  const ns=me.notifications||[];
+  $("notif").innerHTML = ns.length? ns.map(n=>'<div><span>'+badge(n.kind)+' <b>'+n.title+'</b><span class="note" style="display:block">'+(n.body||"")+'</span></span></div>').join("") : '<p class="note">まだありません</p>';
+  if(ns.length && ns[0].id!==lastNotif){
+    if(!firstMe && ["fortune","derby","title","quest","approval","friend_req"].includes(ns[0].kind)) showPop(n0title(ns[0]),ns[0].body,badge(ns[0].kind));
+    lastNotif=ns[0].id;
+  }
+  firstMe=false;
+  // ともだち
+  $("fcount").textContent=(me.friends||0)+"人";
+  $("fdepts").innerHTML=(me.friendDepts||[]).map(d=>'<span class="tag red">'+d+'</span>').join("")||'<span class="note">まだなし</span>';
+  $("titles").innerHTML=(me.titles&&me.titles.length)? me.titles.map(t=>'<div><b>👑 '+t.name+'</b></div>').join("") : '<p class="note">友達5人で最初の称号!</p>';
+  // クエスト
+  const done=me.quests||[];
+  $("quests").innerHTML=QUESTS.map(q=>'<div><span><b>'+q[1]+'</b><span class="note" style="display:block">'+q[2]+'</span></span><span class="tag '+(done.includes(q[0])?'red">達成 '+q[3]:'gray">'+q[3])+'</span></div>').join("");
+  // 保有株
+  $("holds").innerHTML=(me.holdings&&me.holdings.length)? me.holdings.map(h=>'<div><span><b>'+h.code+'</b> × '+h.shares+'株</span><span class="amt">評価 '+fmt(h.shares*h.price)+'</span></div>').join("") : '<p class="note">まだ持っていません</p>';
+}
+function badge(k){return {salary:"💰",relief:"🏦",correction:"🏦",bonus:"🎁",quest:"⭐️",title:"👑",friend:"🤝",friend_req:"🤝",approval:"💳",fortune:"🎰",derby:"🏇"}[k]||"📣";}
+function n0title(n){return n.title;}
+function showPop(t,b,bd){$("pop-title").textContent=t;$("pop-body").textContent=b||"";$("pop-badge").textContent=bd||"Oh!国";$("pop").style.display="flex";try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}}
+
+async function approve(id,ok){
+  try{ const r=await rpc("rpc_approve",{p_no:sess.no,p_pin:sess.pin,p_tx:id,p_accept:ok});
+    toast(ok?"✅ 支払いました":"キャンセルしました"); refresh();
+  }catch(e){ toast(e.message,1); refresh(); }
+}
+async function frespond(id,ok){
+  try{ await rpc("rpc_friend_respond",{p_no:sess.no,p_pin:sess.pin,p_fid:id,p_accept:ok});
+    toast(ok?"🤝 友達になりました!":"見送りました"); refresh();
+  }catch(e){ toast(e.message,1); refresh(); }
+}
+async function friendReq(){
+  const t=$("f-no").value.trim(); if(!t) return toast("相手の番号を入力",1);
+  try{ const r=await rpc("rpc_friend_request",{p_no:sess.no,p_pin:sess.pin,p_target:t});
+    $("f-no").value="";
+    toast(r.result==="accepted"?"🎉 友達成立!":"📨 申請しました。相手があなたの番号("+sess.no+")を入れれば成立");
+    refresh();
+  }catch(e){ toast(e.message,1); }
+}
+
+async function renderFacilities(){
+  try{
+    const m=me&&me.me;
+    $("myinit").innerHTML='<b>あなたの初期勤務</b><p class="note">'+(m? m.grp+"組 ／ "+(m.initFac||"—")+"(初期勤務"+m.grp+"の時間にその店へ)":"—")+'</p>';
+    const fs=await rpc("rpc_facilities",{});
+    $("facl").innerHTML=fs.map(f=>'<div><span><b>'+f.name+'</b> <span class="note">'+f.booth+'</span></span><span>'+(f.status==="OPEN"?'<span class="tag red">営業中</span>':'<span class="tag gray">準備中</span>')+' <span class="amt">'+f.working+"/"+f.cap+'</span></span></div>').join("");
+  }catch(e){ $("facl").innerHTML='<p class="note">'+e.message+'</p>'; }
+}
+async function renderMarket(){
+  try{
+    const mk=await rpc("rpc_market",{});
+    if(!mk.enabled){ $("mktbox").innerHTML='<p class="note">株式市場は停止中です</p>'; return; }
+    const open=mk.window>0 && !mk.closed;
+    $("mktbox").innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center"><b>📈 Oh!証券</b>'+(mk.closed?'<span class="tag">終値確定</span>':(open?'<span class="tag red">市場'+mk.window+' 開場中</span>':'<span class="tag gray">閉場中</span>'))+'</div>'+
+      mk.companies.map(c=>'<div class="stock"><span><b>'+c.code+'</b><span class="note" style="display:block">'+c.name+'</span></span><span style="text-align:right"><span class="amt">'+fmt(c.price)+'</span>'+(open?'<div><button class="pill" onclick="order(\''+c.code+'\',\'buy\')">買う</button><button class="pill" onclick="order(\''+c.code+'\',\'sell\')">売る</button></div>':"")+'</span></div>').join("")+
+      (open?'<label>株数(1〜10)</label><input id="shares" inputmode="numeric" value="1">':"");
+  }catch(e){ $("mktbox").innerHTML='<p class="note">'+e.message+'</p>'; }
+}
+async function order(code,side){
+  const sh=parseInt(($("shares")&&$("shares").value)||"1",10);
+  try{ const r=await rpc("rpc_market_order",{p_no:sess.no,p_pin:sess.pin,p_code:code,p_side:side,p_shares:sh});
+    toast("✅ 約定:"+code+" "+(side==="buy"?"買い":"売り")+" "+sh+"株("+fmt(r.total)+"コイン)");
+    refresh(); renderMarket();
+  }catch(e){ toast(e.message,1); }
+}
+
+(async()=>{
+  if(sess){ try{ me=await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); enter(); }catch(e){ clearS("ohk_c"); } }
+})();
+</script>
+</body></html>
