@@ -61,6 +61,9 @@
 .votebar{background:#EFEEEA;height:7px;border-radius:99px;overflow:hidden;margin-top:4px}
 .votebar>div{height:100%;background:var(--ac);border-radius:99px}
 #mute{background:none;border:1px solid #3A3A40;color:#ccc;border-radius:9px;padding:5px 9px;font-size:.8rem;margin-left:10px}
+.qh{width:20px;height:20px;border-radius:50%;border:1.5px solid #C9C6C0;background:#fff;color:#8A8781;font-size:.72rem;font-weight:800;margin-left:7px;padding:0;line-height:1;flex-shrink:0}
+.pass-foot .qh{background:transparent;border-color:#4A4A50;color:#C9C9CF}
+#pop-body{white-space:pre-line;text-align:left}
 </style>
 </head><body>
 <header>
@@ -93,8 +96,9 @@
 
 <section class="screen" id="s-home">
   <div id="rushbar"></div>
+  <div id="missionbar" class="urgent" style="display:none;animation:none"></div>
   <div id="alerts"></div>
-  <div class="phasebar"><div class="t"><span id="phname">—</span><span id="phrem"></span></div><div class="pgauge"><div id="phg" style="width:0%"></div></div></div>
+  <div class="phasebar"><div class="t"><span id="phname">—</span><span style="display:flex;align-items:center"><span id="phrem"></span><button class="qh" onclick="help('flow')">?</button></span></div><div class="pgauge"><div id="phg" style="width:0%"></div></div></div>
   <div class="pass">
     <div class="pass-band" id="passband"><span>OH!KOKU PASSPORT</span><span id="myno2">—</span></div>
     <div class="pass-body">
@@ -105,7 +109,7 @@
       </div>
       <div class="pass-qr" id="myqr"></div>
     </div>
-    <div class="pass-foot"><span class="fortune" id="myfortune">—</span><span>友達にこのQRを見せて交換</span></div>
+    <div class="pass-foot"><span class="fortune" id="myfortune">—</span><span style="display:flex;align-items:center">友達にこのQRを見せて交換<button class="qh" onclick="help('pass')">?</button></span></div>
   </div>
   <div class="card" id="resultCard" style="display:none;border-color:var(--gold)">
     <b>🏁 閉国の時間です</b>
@@ -118,7 +122,7 @@
 
 <section class="screen" id="s-work">
   <div class="card" id="myinit"></div>
-  <h2 class="sec">お店の空き状況</h2>
+  <h2 class="sec">お店の空き状況<button class="qh" onclick="help('work')">?</button></h2>
   <div class="card" id="facl">読み込み中…</div>
   <div class="card" style="background:var(--ac-soft);border-color:#FFD3D9">
     <b style="font-size:.86rem">💡 はたらき方</b>
@@ -127,17 +131,18 @@
 </section>
 
 <section class="screen" id="s-mkt">
+  <h2 class="sec" style="margin-top:0">株式市場<button class="qh" onclick="help('stock')">?</button></h2>
   <div class="card" id="mktstatus"></div>
   <div id="mktbox"></div>
   <h2 class="sec">保有株</h2>
   <div class="card list" id="holds"><p class="note">まだ持っていません</p></div>
-  <h2 class="sec">Oh!国ダービー</h2>
+  <h2 class="sec">Oh!国ダービー<button class="qh" onclick="help('derby')">?</button></h2>
   <div class="card" id="derbybox"><p class="note">開催をお楽しみに(ギャンブルブースでエントリー受付)</p></div>
 </section>
 
 <section class="screen" id="s-frd">
   <div class="card">
-    <b style="font-size:.9rem">🤝 友達をつくる</b>
+    <b style="font-size:.9rem;display:flex;align-items:center">🤝 友達をつくる<button class="qh" onclick="help('friend')">?</button></b>
     <p class="note">お互いに相手の番号を入力すると成立。片方だけなら相手に通知が届き、3分以内にOKで成立します。</p>
     <label>相手の市民番号</label>
     <div class="row">
@@ -154,7 +159,7 @@
     <div class="stampgrid" id="fdepts"></div>
     <p class="note">他部署の友達でスタンプが埋まる。5部署で称号「国際人」+200コイン!</p>
   </div>
-  <h2 class="sec">称号</h2>
+  <h2 class="sec">称号<button class="qh" onclick="help('title')">?</button><span class="note" style="margin:0 0 0 auto;font-weight:400">行をタップで条件</span></h2>
   <div class="card list" id="titles"></div>
 </section>
 
@@ -213,9 +218,15 @@
 document.write(scanOverlayHTML());
 
 let me=null, sess=loadS("ohk_c"), lastNotif=0, firstMe=true;
-let prevBal=null, prevDepts=null, prevTitles=null, prevRush=false, prevDerby=null;
+let prevBal=null, prevDepts=null, prevTitles=null, prevRush=false, prevDerby=null, prevPhase=null;
 const DEPTS=["DH","Lab","Medical","Growth","Tech","CS","Global","Sales","HR","経営"];
-const QUESTS=[["rival","🥊","ライバル","ベイブレードで他部署の人と対戦(店長が記録)",50],["table","☕️","相席","カフェで他部署の人と一緒に注文(店長が記録)",30],["doubles","🏀","ダブルス","運動ブースで他部署の人とペア挑戦(店長が記録)",50],["jobhop","💼","転職王","3つの違うお店で勤務を完了する",50],["allwork","👥","全員出勤","チームの出席者全員が自由勤務を完了する",50],["coinvest","📈","共同投資","同じ市場で同じ銘柄を買った他部署の人がいる",30]];
+const QUESTS=[
+ ["rival","🥊","ライバル","ベイブレードで他部署の人と対戦",50,"①他部署の人を1人誘う ②ベイブレードブース(B05)で対戦する ③店長に2人の市民番号を伝えて記録してもらう ── これで2人とも達成!勝ち負けは関係ありません。"],
+ ["table","☕️","相席","カフェで他部署の人と一緒に注文",30,"①他部署の人とカフェ(B02)へ ②2人ともドリンク等を注文 ③店長に2人の番号を伝えて記録 ── いちばん簡単なクエスト。休憩ついでにどうぞ。"],
+ ["doubles","🏀","ダブルス","運動ブースで他部署の人とペア挑戦",50,"①他部署の人とペアを組む ②運動ブース(B08)でバスケか懸垂に挑戦 ③店長に2人の番号を伝えて記録 ── 成功失敗は問いません。挑戦すればOK。"],
+ ["jobhop","💼","転職王","3つの違うお店で勤務を完了する",50,"別々の3店舗で勤務(各12分)を完了すると自動で達成。初期勤務の店も1店にカウントされるので、転職解禁(43分)後にあと2店で働けばOK。"],
+ ["allwork","👥","全員出勤","チームの出席者全員が自由勤務を完了",50,"あなたのチーム(パスポートに表示)の出席メンバー全員が、自由勤務(43分以降)を1回以上完了すると、チーム全員に自動で付与。声をかけあって全員働こう!"],
+ ["coinvest","📈","共同投資","同じ市場で同じ銘柄を買った他部署の人がいる",30,"市場タイム中に株を買ったとき、同じ市場・同じ銘柄を他部署の誰かも買っていれば自動達成。「みんなでICEを買おう!」と示し合わせるのが近道。"]];
 const TITLE_DEF=[["neighbor","ご近所さん","友達5人"],["wellknown","顔が広い","友達10人"],["famous","Oh!国の有名人","友達20人"],["international","国際人","5部署の友達"],["master","Oh!国マスター","全クエスト達成"]];
 
 /* ===== サウンド(合成・素材不要) ===== */
@@ -347,6 +358,17 @@ function render(){
     if(rush.counted>=rush.target&&!loadS("fw_"+rush.no)){ saveS("fw_"+rush.no,1); rain(["🎆","🎇","✨"],30); S.win(); vib([100,50,100,50,300]); toast("🎉 国家事件クリア!目標達成!!"); }
   } else $("rushbar").style.display="none";
   prevRush=!!rush;
+  // 最終国家ミッション
+  if(ph.id==="FINAL_MISSION"){
+    $("missionbar").style.display="block";
+    $("missionbar").innerHTML='<h4>📜 最終国家ミッション 発動中</h4><p class="note" style="color:#6A4A4F">チーム'+(m.team||"?")+'で集まり、紙の<b>繁栄計画書</b>を完成させて政府へ提出!達成チーム数が国家繁栄度(団結30点)に直結します。</p>';
+    if(prevPhase&&prevPhase!=="FINAL_MISSION"&&!firstMe){
+      $("alert-t").textContent="最終国家ミッション";
+      $("alert-b").textContent="チームで集合!紙の『繁栄計画書』を完成させて提出せよ。国の運命は団結にかかっている──";
+      $("alert-ov").classList.add("on"); S.drum(); setTimeout(()=>S.fanfare(),900); vib([200,80,200,80,400]);
+    }
+  } else $("missionbar").style.display="none";
+  prevPhase=ph.id;
   // ダービー発走・確定の検知
   if(me.derbyState&&me.derbyState!==prevDerby&&!firstMe){
     if(me.derbyState==="racing"){ $("race-ov").classList.add("on"); S.fanfare(); vib([200,80,200]); }
@@ -398,12 +420,37 @@ function render(){
   $("qsum").innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline"><b>達成状況</b><span><span class="amt" style="font-size:1.3rem">'+done.length+'</span><span class="note" style="display:inline"> / 6</span></span></div><div class="gauge" style="margin-top:8px;height:10px"><div style="width:'+(done.length/6*100)+'%"></div></div><p class="note">全部達成で称号「Oh!国マスター」+100コイン</p>';
   $("quests").innerHTML=QUESTS.map(q=>{
     const d=done.includes(q[0]);
-    return '<div class="quest'+(d?" done":"")+'"><div class="ic'+(d?"":" g")+'">'+q[1]+'</div><div class="qm"><div class="qn">'+q[2]+'</div><p class="note">'+q[3]+'</p></div><span class="tag '+(d?'red">+'+q[4]+' 達成':'gray">+'+q[4])+'</span></div>';
+    return '<div class="quest'+(d?" done":"")+'" style="cursor:pointer" onclick="qdetail(\''+q[0]+'\')"><div class="ic'+(d?"":" g")+'">'+q[1]+'</div><div class="qm"><div class="qn">'+q[2]+'</div><p class="note">'+q[3]+' <span style="color:var(--ac)">▸ タップでやり方</span></p></div><span class="tag '+(d?'red">+'+q[4]+' 達成':'gray">+'+q[4])+'</span></div>';
   }).join("");
   $("holds").innerHTML=(me.holdings&&me.holdings.length)? me.holdings.map(h=>'<div><span><b>'+h.code+'</b> × '+h.shares+'株</span><span class="amt">'+fmt(h.shares*h.price)+'</span></div>').join("") : '<p class="note">まだ持っていません</p>';
   firstMe=false;
 }
 let prevFriends=0;
+const HELP={
+ flow:["🗓","本日の流れ(150分)","0分 開会\n7分〜 初期勤務(A→B→C 3交代・割り当ての店で)\n43分〜 国民昼休み(基本弁当タダ!)+転職解禁\n67分〜 自由勤務&市場①\n79分 🚨国家事件1\n87分〜 自由勤務&市場②\n99分 🚨国家事件2\n107分〜 自由勤務&市場③(ダービー開催!)\n115分 ラストオーダー(株の終値確定)\n119分 📜最終国家ミッション\n133分 表彰\n150分 閉国 ── コインは全額失効します。使い切ろう!"],
+ pass:["🛂","パスポートの見方","・大きな数字=いまの口座残高(給与や買い物で動く)\n・QR=友達交換のほか、お店のレジや銀行で見せる身分証\n・下の金文字=人生ガチャの結果(入国時の抽選)\n・上の帯は総資産で進化します:赤 → シルバー(2,000) → ゴールド(3,500) → ダイヤ(5,000)"],
+ work:["💼","はたらき方","・1回の勤務は12分、給与はどの店も500コイン\n・店に行って店長に「働きたいです」と伝えるだけ\n・フェーズが終わると自動で完了&給与振込\n・「空き◯」=いま入れる/「満員」=次を待つ/「準備中」=営業時間外\n・43分までは割り当ての店(初期勤務)のみ、以降は自由\n・お金に困ったら銀行へ(救済給付があります)"],
+ stock:["📈","株式市場のルール","・売買できるのは市場タイム3回だけ(①67分〜/②87分〜/③107分〜)\n・1つの市場で買い1回・売り1回、1回10株まで、手数料なし\n・株価はみんなの売買で決まる:買いが集まった銘柄は次の市場で上がり、売られると下がる\n・115分に終値が確定。持ち株は終値で総資産に自動換算されるので、売りそびれても大丈夫\n・他部署の人と同じ銘柄を買うとクエスト「共同投資」達成!"],
+ derby:["🏇","Oh!国ダービーの遊び方","・走るのは抽選で選ばれた6人の同僚!\n・投票券は1枠100コイン、ギャンブルブース(B09)のレジで購入\n・レースは自由勤務3の冒頭、実物の台で開催\n・的中したら3倍(100→300)が自動で振り込まれる\n・出走した本人が優勝すると賞金1,000!\n・出馬表の人気バーで「どの馬が買われているか」が丸見えです"],
+ friend:["🤝","友達のつくり方","・お互いに相手の番号を入力すると、その場で成立\n・片方だけなら相手に通知が届き、3分以内にOKで成立\n・📷QRボタンで相手のパスポートQRを読めば入力いらず\n・申請は1分に6件まで\n・国家事件(2回あります)では、友達の成立数が国の運命を決めます。他部署・レア部署の友達は特に価値が高い!"],
+ title:["👑","称号のとり方","友達やクエストを集めると称号+ボーナス:\n・ご近所さん=友達5人(+50)\n・顔が広い=友達10人(+100)\n・Oh!国の有名人=友達20人(+200)\n・国際人=自分以外の5部署に友達(+200)\n・Oh!国マスター=クエスト全6種を達成(+100)\n称号は「人気者」賞の自慢材料にもなります"]};
+function help(k){
+  const h=HELP[k]; if(!h)return;
+  $("pop-badge").textContent=h[0]+" ガイド";
+  $("pop-title").textContent=h[1];
+  $("pop-body").textContent=h[2];
+  document.querySelector(".pop").classList.remove("gold","big");
+  $("pop").style.display="flex";
+}
+function qdetail(code){
+  const q=QUESTS.find(x=>x[0]===code); if(!q)return;
+  const d=(me&&me.quests||[]).includes(code);
+  $("pop-badge").textContent=q[1]+" クエスト";
+  $("pop-title").textContent=q[2]+(d?" ✓ 達成済み":"");
+  $("pop-body").textContent=q[5]+" ── 報酬:+"+q[4]+"コイン"+(d?"(受取済み)":"");
+  document.querySelector(".pop").classList.remove("gold","big");
+  $("pop").style.display="flex";
+}
 function badge(k){return {salary:"💰",relief:"🏦",correction:"🏦",bonus:"🎁",quest:"⭐️",title:"👑",friend:"🤝",friend_req:"🤝",approval:"💳",fortune:"🎰",derby:"🏇"}[k]||"📣";}
 
 async function approve(id,ok){
@@ -429,8 +476,11 @@ async function friendReq(){
 async function renderFacilities(){
   try{
     const m=me&&me.me;
-    $("myinit").innerHTML='<div style="display:flex;gap:11px;align-items:center"><div class="ic">📍</div><div><b>あなたの最初の職場</b><p class="note">'+(m? m.grp+"組 ── "+(m.initFac||"—")+"(初期勤務"+m.grp+"の時間にこの店へ)":"—")+'</p></div></div>';
+    const GT={A:"開国7分〜19分",B:"開国19分〜31分",C:"開国31分〜43分"};
+    const fname=(window.FSN&&m&&FSN[m.initFac])||(m&&m.initFac)||"—";
+    $("myinit").innerHTML='<div style="display:flex;gap:11px;align-items:flex-start"><div class="ic">📍</div><div><b>初期勤務のご案内</b><p class="note">最初の43分は3交代制。あなたは<b>'+m.grp+'組('+(GT[m.grp]||"")+')</b>のあいだ、<b>'+fname+'</b>で働く割り当てです(時間になったらその店へ。それ以外の時間はお客さん側)。<b style="color:var(--ac)">開国43分からは転職自由</b>──下の一覧から好きな店を選べます。</p></div></div>';
     const fs=await rpc("rpc_facilities",{});
+    window.FSN={}; fs.forEach(f=>FSN[f.id]=f.name);
     $("facl").innerHTML=fs.map(f=>{
       const full=f.working>=f.cap&&f.cap>0;
       return '<div class="faci"><div class="fm"><div class="fn">'+f.name+' <span class="note" style="display:inline">'+f.booth+'</span></div><div class="capbar"><div class="'+(full?"full":"")+'" style="width:'+(f.cap?Math.min(100,f.working/f.cap*100):0)+'%"></div></div></div>'+
@@ -442,8 +492,13 @@ async function renderMarket(){
   try{
     const mk=await rpc("rpc_market",{});
     const open=mk.enabled&&mk.window>0&&!mk.closed;
-    $("mktstatus").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>Oh!証券取引所</b>'+
-      (mk.closed?'<span class="tag">終値確定</span>':(open?'<span class="tag red">市場'+mk.window+' 開場中</span>':'<span class="tag gray">閉場中(市場タイムに開く)</span>'))+'</div>'+
+    const elp=me?Math.max(0,me.elapsedMin||0):0;
+    const WINS=[[67,79,"市場①(自由勤務1)"],[87,99,"市場②(自由勤務2)"],[107,115,"市場③(自由勤務3)"]];
+    const nxt=WINS.find(w=>w[0]>elp);
+    const closedTag=mk.closed?'<span class="tag">終値確定</span>':(nxt?'<span class="tag gray">閉場中 ── 次は'+nxt[2]+'、あと'+Math.ceil(nxt[0]-elp)+'分</span>':'<span class="tag gray">閉場中</span>');
+    $("mktstatus").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="flex-shrink:0">Oh!証券取引所</b>'+
+      (open?'<span class="tag red">市場'+mk.window+' 開場中!売買できます</span>':closedTag)+'</div>'+
+      (!open&&!mk.closed?'<p class="note">市場が開くのは3回:①開国67分〜79分/②87分〜99分/③107分〜115分。115分に終値が確定します。</p>':"")+
       (open?'<label>1回の株数</label><div class="row" id="shsel">'+[1,3,5,10].map(n=>'<button class="pill'+(n===1?" on":"")+'" onclick="setSh(this,'+n+')">'+n+'株</button>').join("")+'</div>':"");
     $("mktbox").innerHTML=mk.companies.map(c=>
       '<div class="stockcard"><div class="top"><span><span class="code">'+c.code+'</span> <span class="nm">'+c.name+'</span></span><span class="pr">'+fmt(c.price)+'</span></div>'+

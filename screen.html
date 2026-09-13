@@ -24,6 +24,7 @@ main{max-width:1100px;padding:34px}
     <div class="scr-rem" id="rem"></div>
   </div>
   <div id="rush"></div>
+  <div id="missionS" style="display:none" class="card"></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:20px">国家繁栄度</b><span class="big2" id="pt">0</span></div>
     <div class="gauge"><div id="pg" style="width:0%"></div></div>
@@ -53,6 +54,11 @@ async function loop(){
         '<div class="big2"><span id="rc">'+(s.rush.counted||0)+'</span> <span style="font-size:36px;color:#9A9AA2">/ '+s.rush.target+'組</span></div>'+
         '<p class="note">友達をつくれ!アプリの「ともだち」からお互いの番号を入力(または申請OK)で成立</p></div>';
     } else document.getElementById("rush").innerHTML="";
+    const ms=document.getElementById("missionS");
+    if(c.ph.id==="FINAL_MISSION"){
+      ms.style.display="block"; ms.style.borderColor="#F3D97E";
+      ms.innerHTML='<div style="text-align:center;padding:10px"><div style="font-size:22px;color:#F3D97E;font-weight:800;letter-spacing:.2em">最終国家ミッション</div><div style="font-size:44px;font-weight:800;margin-top:6px">📜 繁栄計画書を完成させよ</div><p class="note" style="margin-top:10px">チームで集合 → 計画書を書く → 政府へ提出 ── 達成チーム数が繁栄度(団結30点)を決める</p></div>';
+    } else ms.style.display="none";
     const open=s.market&&s.market.enabled&&s.market.window>0&&!s.market.closed;
     document.getElementById("mkt").innerHTML='<b style="font-size:18px">📈 Oh!証券 '+(s.market.closed?"(終値確定)":(open?"市場"+s.market.window+" 開場中":""))+'</b>'+
       '<div style="display:flex;gap:30px;margin-top:10px;flex-wrap:wrap">'+
