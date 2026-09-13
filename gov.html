@@ -66,9 +66,18 @@ table.tb td,table.tb th{white-space:nowrap}
         <div><label>最終ミッション:達成チーム数</label><input id="mdone" inputmode="numeric" placeholder="例: 21"></div>
         <button class="btn mini dark" style="margin:0;padding:12px" onclick="mission()">記録</button>
       </div>
-      <label style="margin-top:14px">🏇 ダービー</label>
+      <label style="margin-top:14px">🏇 ダービー ── ① 出走馬6名(実名)を登録</label>
       <div class="row">
-        <button class="btn dark" style="margin:0" onclick="derbyOpen()">投票券の販売開始</button>
+        <input id="e1" placeholder="A枠"><input id="e2" placeholder="B枠"><input id="e3" placeholder="C枠">
+        <input id="e4" placeholder="D枠"><input id="e5" placeholder="E枠"><input id="e6" placeholder="F枠">
+      </div>
+      <div class="row">
+        <button class="btn dark" style="margin-top:8px" onclick="derbyEntrants()">出走馬を登録</button>
+        <button class="btn dark" style="margin-top:8px" onclick="derbyOpen()">② 馬券の発売開始</button>
+        <button class="btn ghost" style="margin-top:8px" onclick="derbyRace()">③ 発走!(発売締切)</button>
+      </div>
+      <label>④ 結果の確定</label>
+      <div class="row">
         <select id="d-win"></select>
         <input id="d-citizen" inputmode="numeric" placeholder="優勝者の番号">
         <button class="btn mini pri" style="margin:0;padding:12px" onclick="derbySettle()">🏁 清算</button>
@@ -188,7 +197,14 @@ async function paper(){ const ev=await loadEvent(); try{ await rpc("rpc_gov_pape
 async function mission(){ const n=parseInt($("mdone").value,10); if(isNaN(n))return toast("数を入力",1);
   try{ await rpc("rpc_gov_mission",{p_key:KEY,p_done:n}); toast("📝 記録しました"); }catch(e){ toast(e.message,1); } }
 async function facSt(){ try{ await rpc("rpc_gov_facility",{p_key:KEY,p_fid:$("f-sel").value,p_status:$("f-st").value}); toast("適用しました"); }catch(e){ toast(e.message,1); } }
-async function derbyOpen(){ try{ await rpc("rpc_derby_open",{p_key:KEY}); toast("🏇 投票券の販売を開始しました"); }catch(e){ toast(e.message,1); } }
+async function derbyOpen(){ try{ await rpc("rpc_derby_open",{p_key:KEY}); toast("🏇 馬券の発売を開始しました(全市民に出馬表が出ます)"); }catch(e){ toast(e.message,1); } }
+async function derbyEntrants(){
+  const names=["e1","e2","e3","e4","e5","e6"].map(id=>$(id).value.trim());
+  try{ await rpc("rpc_derby_entrants",{p_key:KEY,p_names:names}); toast("出走馬を登録しました"); }catch(e){ toast(e.message,1); }
+}
+async function derbyRace(){
+  try{ await rpc("rpc_derby_race",{p_key:KEY}); toast("🏇 発走!全市民のスマホに実況が出ます"); }catch(e){ toast(e.message,1); }
+}
 async function derbySettle(){
   if(!confirm("レース結果を確定して一括清算します。よろしいですか?"))return;
   try{ const r=await rpc("rpc_derby_settle",{p_key:KEY,p_winner_product:parseInt($("d-win").value,10),p_winner_citizen:$("d-citizen").value.trim()});

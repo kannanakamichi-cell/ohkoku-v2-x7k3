@@ -30,6 +30,7 @@ main{max-width:1100px;padding:34px}
     <div style="display:flex;gap:26px;margin-top:12px" id="pparts"></div>
   </div>
   <div class="card" id="mkt"></div>
+  <div class="card" id="derby" style="display:none"></div>
   <div class="card" id="awards" style="display:none"></div>
 </main>
 <script src="ohk.js"></script>
@@ -56,6 +57,19 @@ async function loop(){
     document.getElementById("mkt").innerHTML='<b style="font-size:18px">📈 Oh!証券 '+(s.market.closed?"(終値確定)":(open?"市場"+s.market.window+" 開場中":""))+'</b>'+
       '<div style="display:flex;gap:30px;margin-top:10px;flex-wrap:wrap">'+
       s.market.companies.map(x=>'<div><div class="note">'+x.code+" "+x.name+'</div><div style="font-size:34px;font-weight:800">'+fmt(x.price)+'</div></div>').join("")+"</div>";
+    try{
+      const dv=await rpc("rpc_derby",{});
+      const box=document.getElementById("derby");
+      if(dv.state&&dv.state!=="closed"){
+        box.style.display="block";
+        const maxV=Math.max(1,...(dv.runners||[]).map(r=>r.votes));
+        box.innerHTML='<b style="font-size:20px">🏇 Oh!国ダービー '+(dv.state==="betting"?"── 馬券発売中!":(dv.state==="racing"?"── 🔴 レース中!!":"── 結果"))+'</b>'+
+          (dv.runners||[]).map(r=>{
+            const win=dv.state==="settled"&&dv.winner===r.pid;
+            return '<div style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid #2A2A30'+(win?';color:#F3D97E':'')+'"><b style="width:46px">'+r.name.slice(-1)+'枠</b><span style="flex:1;font-size:20px;font-weight:800">'+(r.runner||"—")+(win?" 🏆 WIN":"")+'</span><span class="note">'+r.votes+'票</span><div style="width:220px" class="gauge"><div style="width:'+(r.votes/maxV*100)+'%"></div></div></div>';
+          }).join("");
+      } else box.style.display="none";
+    }catch(e){}
     if(c.ph.id==="RESULTS"||c.ph.id==="CLOSED"){
       const a=await rpc("rpc_awards",{});
       const N={richest:"👑 総資産",riser:"🚀 成り上がり",investor:"📈 投資家",spender:"🛍 消費王",worker:"💪 働き者",popular:"🤝 人気者"};

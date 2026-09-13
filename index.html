@@ -6,107 +6,243 @@
 <link rel="stylesheet" href="ohk.css">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ===== 演出 ===== */
+.ov{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+.ov.on{display:flex}
+#gacha{background:#0B0B0E;color:#fff;overflow:hidden}
+#gacha .env{font-size:6rem;animation:shake .5s infinite;cursor:pointer}
+@keyframes shake{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-4px)}}
+#gacha .hint{color:#9A9AA2;font-size:.8rem;margin-top:14px}
+#gacha .rays{position:absolute;inset:-50%;display:none;animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#gacha.t5 .rays{display:block;background:conic-gradient(#FF5E7A,#FFC46B,#7DF0A8,#7BC8FF,#C79BF2,#FF5E7A)}
+#gacha.t4 .rays{display:block;background:conic-gradient(#8a6d1a,#E8C64F,#8a6d1a,#E8C64F,#8a6d1a)}
+#gacha.t3 .rays{display:block;background:conic-gradient(#333,#666,#333,#666,#333)}
+#gacha .res{position:relative;z-index:2;display:none}
+#gacha .res .fname{font-size:2rem;font-weight:800;margin:10px 0 4px}
+#gacha .res .famt{font-size:2.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+#gacha .res .flbl{color:#9A9AA2;font-size:.78rem}
+#gacha.t1{background:#05050a}
+.fl{position:absolute;top:-10%;font-size:1.5rem;animation:fall linear forwards;pointer-events:none;z-index:1}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+.flashw{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:3}
+.flashw.go{animation:fl .5s ease-out}
+@keyframes fl{0%{opacity:1}100%{opacity:0}}
+#alert-ov{background:repeating-linear-gradient(45deg,#B3001B 0 26px,#17171A 26px 52px);color:#fff}
+#alert-ov .aw{background:rgba(0,0,0,.75);border:2px solid #fff;border-radius:18px;padding:26px 22px;max-width:340px}
+#alert-ov .at{font-size:1.5rem;font-weight:800;letter-spacing:.1em}
+#race-ov{background:#0B3B1E;color:#fff}
+#race-ov .rt{font-size:1.7rem;font-weight:800}
+#win-ov{background:rgba(10,10,12,.94);color:#fff}
+#win-ov .wt{font-size:2.4rem;font-weight:800;color:#F3D97E}
+#lose-ov{background:rgba(10,10,12,.94);color:#fff}
+.tik{background:#fff;color:#17171A;border:2px solid var(--ac);border-radius:12px;padding:10px 14px;display:inline-block;position:relative}
+.tik::before{content:"";position:absolute;left:0;right:0;top:34px;border-top:2px dashed #F0B7BF}
+.tik .th{font-size:.6rem;letter-spacing:.2em;color:var(--ac);font-weight:800}
+.tik .tn{font-size:1.1rem;font-weight:800;margin-top:10px}
+#lose-ov .tik{animation:rip .9s ease-in .6s forwards}
+@keyframes rip{60%{transform:rotate(6deg)}100%{transform:rotate(14deg) translateY(40vh);opacity:0}}
+.band-ov{position:fixed;left:0;right:0;top:38%;z-index:71;background:linear-gradient(90deg,#8a6d1a,#E8C64F,#8a6d1a);color:#17171A;font-weight:800;text-align:center;padding:16px;font-size:1.15rem;transform:translateX(-105%);display:none}
+.band-ov.go{display:block;animation:bandin 2.6s ease forwards}
+@keyframes bandin{15%{transform:translateX(0)}85%{transform:translateX(0)}100%{transform:translateX(105%)}}
+#rushbar{border:2px solid var(--ac);background:#FFF3F5;border-radius:16px;padding:12px 14px;margin-bottom:10px;display:none}
+#rushbar .rn{font-weight:800;color:var(--ac);font-size:.9rem}
+#rushbar .rc{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.balup{animation:bup .7s}
+@keyframes bup{30%{color:#B8942F;transform:scale(1.12)}}
+.baldn{animation:bdn .7s}
+@keyframes bdn{30%{color:#FF5E7A;transform:scale(.94)}}
+.stamp.newget{animation:stpop .5s cubic-bezier(.2,2,.4,1)}
+@keyframes stpop{0%{transform:scale(2.2) rotate(20deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+.pass-band.tier-s{background:linear-gradient(90deg,#9EA6B4,#C7CBD3,#9EA6B4)}
+.pass-band.tier-g{background:linear-gradient(90deg,#B8942F,#E8C64F,#B8942F);color:#17171A}
+.pass-band.tier-d{background:linear-gradient(90deg,#8EE3F5,#C79BF2,#F5A0C0);color:#17171A}
+.votebar{background:#EFEEEA;height:7px;border-radius:99px;overflow:hidden;margin-top:4px}
+.votebar>div{height:100%;background:var(--ac);border-radius:99px}
+#mute{background:none;border:1px solid #3A3A40;color:#ccc;border-radius:9px;padding:5px 9px;font-size:.8rem;margin-left:10px}
+</style>
 </head><body>
 <header>
   <div class="ttl"><i>!</i> Oh!国</div>
-  <div class="ph" id="hph">—</div>
+  <div style="display:flex;align-items:center">
+    <div class="ph" id="hph">—</div>
+    <button id="mute" onclick="toggleMute()">🔊</button>
+  </div>
 </header>
 <main>
 
 <section class="screen on" id="s-login">
-  <div class="card" style="text-align:center;padding:26px 16px">
-    <div style="font-size:40px">🏛</div>
-    <h3 style="margin:8px 0 4px">Oh!国へようこそ</h3>
-    <p class="note">名札の市民番号でログイン。初めての人は、好きな4桁のPINを決めて入力すると入国できます。</p>
-    <label style="text-align:left">市民番号</label>
-    <input id="l-no" inputmode="numeric" placeholder="101">
-    <label style="text-align:left">PIN(4桁)</label>
-    <input id="l-pin" inputmode="numeric" maxlength="4" placeholder="はじめての人はここで決める">
-    <button class="btn pri" onclick="login()">🛂 入国 / ログイン</button>
+  <div class="pass" style="margin-top:14px">
+    <div class="pass-band"><span>OH!KOKU PASSPORT</span><span>Oh my teeth</span></div>
+    <div class="pass-body" style="display:block;text-align:center;padding:26px 16px">
+      <div style="font-size:2.4rem">🛂</div>
+      <div class="pass-name" style="font-size:1.2rem;margin-top:6px">Oh!国へようこそ</div>
+      <p style="font-size:.74rem;color:#A6A6AD;margin-top:6px">名札の市民番号で入国できます</p>
+    </div>
+  </div>
+  <div class="card">
+    <label>市民番号</label>
+    <input id="l-no" inputmode="numeric" placeholder="名札に書いてある番号(例: 101)">
+    <label>PIN(4桁の暗証番号)</label>
+    <input id="l-pin" inputmode="numeric" maxlength="4" placeholder="はじめての人は、ここで好きな4桁を決める">
+    <button class="btn pri" onclick="login()">入国する</button>
+    <p class="note">はじめて入力した4桁があなたのPINになります。忘れたら政府ブースでリセットできます。</p>
   </div>
 </section>
 
 <section class="screen" id="s-home">
+  <div id="rushbar"></div>
   <div id="alerts"></div>
-  <div class="card" id="fortuneCard" style="display:none"></div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:baseline">
-      <div><b id="myname">—</b><span class="note" id="mymeta" style="display:block"></span></div>
-      <div style="text-align:right"><div class="big amt" id="bal">—</div><span class="note">コイン</span></div>
+  <div class="phasebar"><div class="t"><span id="phname">—</span><span id="phrem"></span></div><div class="pgauge"><div id="phg" style="width:0%"></div></div></div>
+  <div class="pass">
+    <div class="pass-band" id="passband"><span>OH!KOKU PASSPORT</span><span id="myno2">—</span></div>
+    <div class="pass-body">
+      <div class="pass-main">
+        <div class="pass-name" id="myname">—</div>
+        <div class="pass-meta" id="mymeta">—</div>
+        <div class="pass-bal"><b id="bal">—</b><span>コイン</span></div>
+      </div>
+      <div class="pass-qr" id="myqr"></div>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;margin-top:10px">
-      <div class="qr" id="myqr"></div>
-      <p class="note">これがあなたの名札QRの代わり。<b>友達交換</b>のとき相手にスキャンしてもらえます(番号:<b id="myno2">—</b>)</p>
-    </div>
+    <div class="pass-foot"><span class="fortune" id="myfortune">—</span><span>友達にこのQRを見せて交換</span></div>
+  </div>
+  <div class="card" id="resultCard" style="display:none;border-color:var(--gold)">
+    <b>🏁 閉国の時間です</b>
+    <button class="btn dark" onclick="showResult()">あなたのOh!国人生を見る</button>
   </div>
   <div class="card" id="shiftCard" style="display:none"></div>
   <h2 class="sec">お知らせ</h2>
-  <div class="card list" id="notif"><p class="note">まだありません</p></div>
+  <div class="card feed" id="notif"><p class="note">まだお知らせはありません。</p></div>
 </section>
 
 <section class="screen" id="s-work">
   <div class="card" id="myinit"></div>
   <h2 class="sec">お店の空き状況</h2>
-  <div class="card list" id="facl">読み込み中…</div>
-  <p class="note">勤務の開始・完了はお店の店長さんの端末で行います。行きたい店に向かって「働きたいです」と伝えてください。1シフト12分、給与は全店500コイン。</p>
+  <div class="card" id="facl">読み込み中…</div>
+  <div class="card" style="background:var(--ac-soft);border-color:#FFD3D9">
+    <b style="font-size:.86rem">💡 はたらき方</b>
+    <p class="note" style="color:#8A4A52">行きたいお店で「働きたいです」と店長に伝えるだけ。1回12分、給与はどの店も500コイン。フェーズが終わると自動で振り込まれます。</p>
+  </div>
 </section>
 
 <section class="screen" id="s-mkt">
-  <div class="card" id="mktbox">読み込み中…</div>
+  <div class="card" id="mktstatus"></div>
+  <div id="mktbox"></div>
   <h2 class="sec">保有株</h2>
   <div class="card list" id="holds"><p class="note">まだ持っていません</p></div>
-  <p class="note">売買できるのは市場タイム(自由勤務1・2・3)だけ。1つの市場で買い1回・売り1回、1回10株まで。株価はみんなの売買で動き、ラストオーダーで終値が確定します。</p>
+  <h2 class="sec">Oh!国ダービー</h2>
+  <div class="card" id="derbybox"><p class="note">開催をお楽しみに(ギャンブルブースでエントリー受付)</p></div>
 </section>
 
 <section class="screen" id="s-frd">
   <div class="card">
+    <b style="font-size:.9rem">🤝 友達をつくる</b>
+    <p class="note">お互いに相手の番号を入力すると成立。片方だけなら相手に通知が届き、3分以内にOKで成立します。</p>
     <label>相手の市民番号</label>
     <div class="row">
-      <input id="f-no" inputmode="numeric" placeholder="102">
-      <button class="btn mini dark" style="margin:0;padding:12px" onclick="startScan(no=>{$('f-no').value=no;friendReq();})">📷 スキャン</button>
+      <input id="f-no" inputmode="numeric" placeholder="相手の名札の番号">
+      <button class="btn mini dark" onclick="startScan(no=>{$('f-no').value=no;friendReq();})">📷 QR</button>
     </div>
-    <button class="btn pri" onclick="friendReq()">🤝 友達申請(お互い入力で成立)</button>
-    <p class="note">相手も同時にあなたの番号を入れると、その場で成立。片方だけなら相手に通知が届き、3分以内にOKすれば成立します。</p>
+    <button class="btn pri" onclick="friendReq()">友達申請を送る</button>
   </div>
   <div class="card">
-    <div class="kv"><span>友達の数</span><b id="fcount">0人</b></div>
-    <div style="margin-top:8px"><span class="note">部署スタンプ:</span><span id="fdepts"></span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <b style="font-size:.9rem">部署スタンプ帳</b>
+      <span><span class="amt" id="fcount" style="font-size:1.3rem">0</span><span class="note" style="display:inline">人の友達</span></span>
+    </div>
+    <div class="stampgrid" id="fdepts"></div>
+    <p class="note">他部署の友達でスタンプが埋まる。5部署で称号「国際人」+200コイン!</p>
   </div>
   <h2 class="sec">称号</h2>
-  <div class="card list" id="titles"><p class="note">友達5人で最初の称号!</p></div>
+  <div class="card list" id="titles"></div>
 </section>
 
 <section class="screen" id="s-qst">
-  <h2 class="sec">クエスト(各1回・全達成でOh!国マスター)</h2>
-  <div class="card list" id="quests"></div>
+  <div class="card" id="qsum"></div>
+  <div class="card" id="quests"></div>
 </section>
 
 </main>
 <nav id="cnav" style="display:none">
-  <button data-s="home" class="on"><span>🏠</span>ホーム</button>
+  <button data-s="home" class="on"><span>🏛</span>ホーム</button>
   <button data-s="work"><span>💼</span>はたらく</button>
   <button data-s="mkt"><span>📈</span>とうし</button>
   <button data-s="frd"><span>🤝</span>ともだち</button>
   <button data-s="qst"><span>⭐️</span>クエスト</button>
 </nav>
+
+<div class="ov" id="gacha" onclick="gachaTap()">
+  <div class="rays"></div><div class="flashw" id="gflash"></div>
+  <div id="genv"><div class="env">🧧</div><p class="hint">運命の封筒が届きました ── タップで開封</p></div>
+  <div class="res" id="gres">
+    <div class="flbl">あなたの人生は……</div>
+    <div class="fname" id="gname"></div>
+    <div class="famt"><span id="gamt">0</span><span style="font-size:1rem;color:#9A9AA2"> コイン</span></div>
+    <div class="flbl">からのスタート</div>
+    <button class="btn pri" style="margin-top:20px;position:relative;z-index:5" onclick="gachaClose(event)">パスポートを受け取る</button>
+  </div>
+</div>
+<div class="ov" id="alert-ov" onclick="this.classList.remove('on')">
+  <div class="aw"><div style="font-size:.72rem;letter-spacing:.3em">国家緊急速報</div>
+  <div class="at" id="alert-t">—</div><p id="alert-b" style="font-size:.82rem;margin-top:8px"></p>
+  <p style="font-size:.66rem;color:#ccc;margin-top:12px">タップで閉じる ── ホームにカウンター表示中</p></div>
+</div>
+<div class="ov" id="race-ov" onclick="this.classList.remove('on')">
+  <div class="rt">🏇 第1回 Oh!国ダービー</div>
+  <div style="font-size:2.2rem;font-weight:800;margin-top:6px">発走!!</div>
+  <p style="font-size:.78rem;color:#B9E3C8;margin-top:10px">ギャンブルブースに注目!(タップで閉じる)</p>
+</div>
+<div class="ov" id="win-ov" onclick="this.classList.remove('on')">
+  <div class="wt" id="win-t">的中!!</div><p id="win-b" style="margin-top:8px"></p>
+  <p style="font-size:.7rem;color:#9A9AA2;margin-top:14px">タップで閉じる</p>
+</div>
+<div class="ov" id="lose-ov" onclick="this.classList.remove('on')">
+  <div class="tik"><div class="th">OH!KOKU KEIBA</div><div class="tn" id="lose-t">—</div></div>
+  <p style="margin-top:16px">残念……次のレースに期待</p>
+</div>
+<div class="ov" id="result-ov" style="background:rgba(10,10,12,.95)"></div>
+<div class="band-ov" id="titleband"></div>
 <div class="popwrap" id="pop"><div class="pop">
   <span class="badge" id="pop-badge">Oh!国</span>
   <h3 id="pop-title"></h3><p id="pop-body"></p>
-  <button class="btn dark" onclick="$('pop').style.display='none'">OK</button>
+  <button class="btn dark" onclick="$('pop').style.display='none'">とじる</button>
 </div></div>
 <script src="ohk.js"></script>
 <script>
 document.write(scanOverlayHTML());
 
 let me=null, sess=loadS("ohk_c"), lastNotif=0, firstMe=true;
-const QUESTS=[
- ["rival","🥊 ライバル","ベイブレードで他部署の人と対戦(店長が記録)","+50"],
- ["table","☕️ 相席","カフェで他部署の人と一緒に注文(店長が記録)","+30"],
- ["doubles","🏀 ダブルス","運動ブースで他部署の人とペア挑戦(店長が記録)","+50"],
- ["jobhop","💼 転職王","3つの違う店で勤務を完了","+50"],
- ["allwork","👥 全員出勤","チームの出席者全員が自由勤務を完了","+50"],
- ["coinvest","🤝 共同投資","同じ市場で同じ銘柄を買った他部署の人がいる","+30"]];
+let prevBal=null, prevDepts=null, prevTitles=null, prevRush=false, prevDerby=null;
+const DEPTS=["DH","Lab","Medical","Growth","Tech","CS","Global","Sales","HR","経営"];
+const QUESTS=[["rival","🥊","ライバル","ベイブレードで他部署の人と対戦(店長が記録)",50],["table","☕️","相席","カフェで他部署の人と一緒に注文(店長が記録)",30],["doubles","🏀","ダブルス","運動ブースで他部署の人とペア挑戦(店長が記録)",50],["jobhop","💼","転職王","3つの違うお店で勤務を完了する",50],["allwork","👥","全員出勤","チームの出席者全員が自由勤務を完了する",50],["coinvest","📈","共同投資","同じ市場で同じ銘柄を買った他部署の人がいる",30]];
+const TITLE_DEF=[["neighbor","ご近所さん","友達5人"],["wellknown","顔が広い","友達10人"],["famous","Oh!国の有名人","友達20人"],["international","国際人","5部署の友達"],["master","Oh!国マスター","全クエスト達成"]];
 
+/* ===== サウンド(合成・素材不要) ===== */
+let AC=null, MUTE=loadS("ohk_mute")||false;
+$("mute")&&($("mute").textContent=MUTE?"🔇":"🔊");
+function toggleMute(){ MUTE=!MUTE; saveS("ohk_mute",MUTE); $("mute").textContent=MUTE?"🔇":"🔊"; }
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); return AC; }
+function tone(f,t0,dur,type,vol){ if(MUTE)return; const a=ac(); if(!a)return;
+  const o=a.createOscillator(),g=a.createGain(); o.type=type||"sine"; o.frequency.value=f;
+  g.gain.setValueAtTime(vol||.15,a.currentTime+t0); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t0+dur);
+  o.connect(g); g.connect(a.destination); o.start(a.currentTime+t0); o.stop(a.currentTime+t0+dur+.05); }
+const S={
+  coin(){ tone(880,0,.09,"square",.12); tone(1320,.08,.14,"square",.12); },
+  fanfare(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.12,.3,"triangle",.18)); tone(1319,.5,.5,"triangle",.2); },
+  stamp(){ tone(140,0,.12,"square",.25); },
+  siren(){ for(let i=0;i<4;i++){ tone(880,i*.3,.15,"sawtooth",.15); tone(660,i*.3+.15,.15,"sawtooth",.15);} },
+  sad(){ tone(300,0,.4,"sine",.15); tone(220,.35,.7,"sine",.15); },
+  drum(){ for(let i=0;i<14;i++) tone(110,i*.07,.05,"square",.1); },
+  win(){ [784,988,1175,1568].forEach((f,i)=>tone(f,i*.1,.35,"triangle",.2)); }
+};
+function vib(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} }
+function rain(chars,n){ for(let i=0;i<(n||18);i++){ const s=document.createElement("span"); s.className="fl";
+  s.textContent=chars[i%chars.length]; s.style.left=(Math.random()*100)+"%";
+  s.style.animationDuration=(1.4+Math.random()*1.6)+"s"; s.style.animationDelay=(Math.random()*.5)+"s";
+  document.body.appendChild(s); setTimeout(()=>s.remove(),3600); } }
+
+/* ===== タブ ===== */
 document.querySelectorAll("nav button").forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
@@ -114,19 +250,48 @@ document.querySelectorAll("nav button").forEach(b=>{
     document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
     $("s-"+b.dataset.s).classList.add("on");
     if(b.dataset.s==="work") renderFacilities();
-    if(b.dataset.s==="mkt") renderMarket();
+    if(b.dataset.s==="mkt"){ renderMarket(); renderDerby(); }
   };
 });
 
+/* ===== 入国+ガチャ ===== */
 async function login(){
   const no=$("l-no").value.trim(), pin=$("l-pin").value.trim();
   if(!no||!pin) return toast("番号とPINを入力してください",1);
+  ac();
   try{
     me = await rpc("rpc_login",{p_no:no,p_pin:pin});
     saveS("ohk_c",{no,pin}); sess={no,pin};
-    enter();
+    if(!loadS("gacha_"+no)){ showGacha(); } else enter();
   }catch(e){ toast(e.message,1); }
 }
+let gachaStage=0;
+function tier(f){ f=f||""; if(f.includes("大富豪"))return 5; if(f.includes("裕福"))return 4; if(f.includes("質素"))return 2; if(f.includes("どん底"))return 1; return 3; }
+function showGacha(){ gachaStage=1; $("gacha").className="ov on"; $("genv").style.display="block"; $("gres").style.display="none"; S.drum(); }
+function gachaTap(){
+  if(gachaStage!==1)return; gachaStage=2;
+  const t=tier(me.me.fortune);
+  $("gflash").classList.add("go"); setTimeout(()=>$("gflash").classList.remove("go"),600);
+  vib(t>=4?[150,60,150,60,300]:(t===1?[400]:[120]));
+  setTimeout(()=>{
+    $("genv").style.display="none";
+    $("gacha").classList.add("t"+t);
+    $("gres").style.display="block";
+    $("gname").textContent=me.me.fortune||"🙂 ふつう";
+    if(t>=4){ S.fanfare(); rain(t===5?["🎊","✨","💎","🪙"]:["✨","🪙"],26); }
+    else if(t===1){ S.sad(); rain(["💧"],22); }
+    else if(t===2){ S.stamp(); }
+    else { S.coin(); }
+    countTo($("gamt"),0,me.me.initialAsset||1000,900);
+  },350);
+}
+function gachaClose(ev){ ev.stopPropagation(); saveS("gacha_"+sess.no,1); $("gacha").className="ov"; enter(); }
+function countTo(el,from,to,ms){
+  const st=performance.now();
+  function f(now){ const p=Math.min(1,(now-st)/ms); el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-p,3)))); if(p<1)requestAnimationFrame(f); }
+  requestAnimationFrame(f);
+}
+
 function enter(){
   $("s-login").classList.remove("on");
   $("s-home").classList.add("on");
@@ -135,103 +300,225 @@ function enter(){
 }
 async function refresh(){
   if(!sess) return;
-  try{ me = await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); render(); }
-  catch(e){}
+  try{ me = await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); render(); }catch(e){}
 }
 let pollT=null;
 function startPoll(){ if(pollT)clearInterval(pollT); pollT=setInterval(refresh,3000); }
 
+/* ===== メイン描画 ===== */
 function render(){
   if(!me) return;
-  const m=me.me;
-  $("hph").innerHTML = (me.phase?me.phase.label:"—") + "<br>" + (me.paper?'<span style="color:#FFB3BC">📄紙モード中</span>':"");
-  $("myname").textContent = m.name;
-  $("mymeta").textContent = m.dept+" ／ 市民番号 "+m.no+(m.team?" ／ チーム"+m.team:"");
-  $("bal").textContent = fmt(me.balance);
-  $("myno2").textContent = m.no;
-  if(window.QRCode){ const q=$("myqr"); if(q.dataset.no!==m.no){ q.innerHTML=""; new QRCode(q,{text:"OHK:"+m.no,width:74,height:74}); q.dataset.no=m.no; } }
-  if(m.fortune){
-    $("fortuneCard").style.display="block";
-    $("fortuneCard").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>あなたの人生:'+m.fortune+'</b><span class="note">初期資産 '+fmt(m.initialAsset)+'</span></div>';
+  const m=me.me, ph=me.phase||{};
+  $("hph").innerHTML=(me.paper?'<span style="color:#FF9AA6">紙モード中</span><br>':"")+"<b>"+(ph.label||"—")+"</b>";
+  $("phname").textContent=ph.label||"—";
+  const el=Math.max(0,me.elapsedMin||0);
+  $("phg").style.width=Math.min(100, el/150*100)+"%";
+  $("phrem").textContent="開国から "+Math.floor(el)+"分";
+  $("myname").textContent=m.name;
+  $("mymeta").textContent=m.dept+(m.team?" ／ チーム"+m.team:"")+" ／ "+m.grp+"組";
+  $("myno2").textContent="NO. "+m.no;
+  $("myfortune").textContent=(m.fortune||"🙂 ふつう")+"(初期 "+fmt(m.initialAsset)+")";
+  if(window.QRCode){ const q=$("myqr"); if(q.dataset.no!==m.no){ q.innerHTML=""; new QRCode(q,{text:"OHK:"+m.no,width:78,height:78}); q.dataset.no=m.no; } }
+  // 残高:数字ロール+チャリン+コインの雨
+  const balEl=$("bal");
+  if(prevBal===null||firstMe){ balEl.textContent=fmt(me.balance); }
+  else if(me.balance!==prevBal){
+    const up=me.balance>prevBal;
+    countTo(balEl,prevBal,me.balance,700);
+    balEl.classList.remove("balup","baldn"); void balEl.offsetWidth;
+    balEl.classList.add(up?"balup":"baldn");
+    if(up){ S.coin(); if(me.balance-prevBal>=300) rain(["🪙"],12); }
   }
-  // 承認待ち・友達申請カード
+  prevBal=me.balance;
+  // パスポートの格
+  const total=me.balance+(me.holdings||[]).reduce((a,h)=>a+h.shares*h.price,0);
+  const pb=$("passband"); pb.className="pass-band"+(total>=5000?" tier-d":total>=3500?" tier-g":total>=2000?" tier-s":"");
+  // 国家事件
+  const rush=me.rush;
+  if(rush){
+    $("rushbar").style.display="block";
+    const pct=Math.min(100, rush.counted/rush.target*100);
+    $("rushbar").innerHTML='<div class="rn">🚨 '+rush.name+'</div><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="rc">'+rush.counted+' <span style="font-size:.8rem;color:var(--sub)">/ '+rush.target+'組</span></span><span class="note">友達をつくって国を救え!</span></div><div class="pgauge" style="margin-top:6px"><div style="width:'+pct+'%"></div></div>';
+    if(!prevRush&&!firstMe){
+      $("alert-t").textContent=rush.name;
+      $("alert-b").textContent="目標:"+rush.target+"組の友達成立。「ともだち」タブからお互いの番号を入力!";
+      $("alert-ov").classList.add("on"); S.siren(); vib([300,100,300,100,500]);
+    }
+    if(rush.counted>=rush.target&&!loadS("fw_"+rush.no)){ saveS("fw_"+rush.no,1); rain(["🎆","🎇","✨"],30); S.win(); vib([100,50,100,50,300]); toast("🎉 国家事件クリア!目標達成!!"); }
+  } else $("rushbar").style.display="none";
+  prevRush=!!rush;
+  // ダービー発走・確定の検知
+  if(me.derbyState&&me.derbyState!==prevDerby&&!firstMe){
+    if(me.derbyState==="racing"){ $("race-ov").classList.add("on"); S.fanfare(); vib([200,80,200]); }
+    if(me.derbyState==="settled"){ derbyResult(); }
+  }
+  prevDerby=me.derbyState;
+  // 割り込みカード
   let al="";
   (me.pendingTx||[]).forEach(t=>{
-    al+='<div class="card" style="border-color:var(--ac)"><b>💳 支払いの確認</b><p class="note">'+t.note+' ── '+fmt(t.amount)+'コイン</p><div class="row"><button class="btn pri" style="margin-top:8px" onclick="approve('+t.id+',true)">承認して支払う</button><button class="btn ghost" style="margin-top:8px" onclick="approve('+t.id+',false)">キャンセル</button></div></div>';
+    al+='<div class="urgent"><h4>💳 支払いの確認</h4><p class="note" style="color:#6A4A4F">'+t.note+' ── <b style="font-size:1rem;color:var(--ink)">'+fmt(t.amount)+'コイン</b>(60秒以内)</p><div class="row"><button class="btn pri" style="margin-top:9px" onclick="approve('+t.id+',true)">支払う</button><button class="btn ghost" style="margin-top:9px" onclick="approve('+t.id+',false)">やめる</button></div></div>';
   });
   (me.pendingFriend||[]).forEach(f=>{
-    al+='<div class="card" style="border-color:var(--ac)"><b>🤝 '+f.from+'さんから友達申請</b><div class="row"><button class="btn pri" style="margin-top:8px" onclick="frespond('+f.id+',true)">OK!</button><button class="btn ghost" style="margin-top:8px" onclick="frespond('+f.id+',false)">ごめん</button></div></div>';
+    al+='<div class="urgent"><h4>🤝 '+f.from+'さんから友達申請</h4><div class="row"><button class="btn pri" style="margin-top:9px" onclick="frespond('+f.id+',true)">OK!</button><button class="btn ghost" style="margin-top:9px" onclick="frespond('+f.id+',false)">ごめん</button></div></div>';
   });
   $("alerts").innerHTML=al;
+  // リザルト導線
+  $("resultCard").style.display=(ph.id==="RESULTS"||ph.id==="CLOSED")?"block":"none";
   // 勤務中
   if(me.shift){ $("shiftCard").style.display="block";
-    $("shiftCard").innerHTML='<b>💼 勤務中:'+me.shift.name+'</b><p class="note">フェーズ終了で自動的に完了し、給与500コインが振り込まれます(店長の完了操作でも可)</p>';
+    $("shiftCard").innerHTML='<div style="display:flex;gap:11px;align-items:center"><div class="ic">💼</div><div><b>'+me.shift.name+'で勤務中</b><p class="note">フェーズ終了で自動完了 → 給与500コインが振り込まれます</p></div></div>';
   } else $("shiftCard").style.display="none";
   // 通知
   const ns=me.notifications||[];
-  $("notif").innerHTML = ns.length? ns.map(n=>'<div><span>'+badge(n.kind)+' <b>'+n.title+'</b><span class="note" style="display:block">'+(n.body||"")+'</span></span></div>').join("") : '<p class="note">まだありません</p>';
-  if(ns.length && ns[0].id!==lastNotif){
-    if(!firstMe && ["fortune","derby","title","quest","approval","friend_req"].includes(ns[0].kind)) showPop(n0title(ns[0]),ns[0].body,badge(ns[0].kind));
-    lastNotif=ns[0].id;
+  $("notif").innerHTML = ns.length? ns.map(n=>'<div><div class="ic '+(["salary","bonus","relief","derby"].includes(n.kind)?"":"g")+'">'+badge(n.kind)+'</div><div><b>'+n.title+'</b><p class="note">'+(n.body||"")+'</p></div></div>').join("") : '<p class="note">まだお知らせはありません。</p>';
+  if(ns.length && ns[0].id!==lastNotif){ lastNotif=ns[0].id; }
+  // ともだち:スタンプ演出
+  $("fcount").textContent=me.friends||0;
+  const fd=me.friendDepts||[];
+  let newDept=null;
+  if(prevDepts&&fd.length>prevDepts.length&&!firstMe){ newDept=fd.find(d=>!prevDepts.includes(d)); S.stamp(); vib([80]); }
+  else if(prevDepts&&(me.friends||0)>prevFriends&&!firstMe){ S.stamp(); }
+  $("fdepts").innerHTML=DEPTS.map(d=>'<div class="stamp'+(fd.includes(d)?" got":"")+(d===newDept?" newget":"")+'">'+d+'</div>').join("");
+  prevDepts=fd.slice(); prevFriends=me.friends||0;
+  // 称号:金帯演出
+  const myT=(me.titles||[]).map(t=>t.code);
+  if(prevTitles&&myT.length>prevTitles.length&&!firstMe){
+    const nt=(me.titles||[]).find(t=>!prevTitles.includes(t.code));
+    const b=$("titleband"); b.textContent="👑 称号解放 ── "+(nt?nt.name:"");
+    b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
+    S.win(); vib([120,60,120]);
   }
-  firstMe=false;
-  // ともだち
-  $("fcount").textContent=(me.friends||0)+"人";
-  $("fdepts").innerHTML=(me.friendDepts||[]).map(d=>'<span class="tag red">'+d+'</span>').join("")||'<span class="note">まだなし</span>';
-  $("titles").innerHTML=(me.titles&&me.titles.length)? me.titles.map(t=>'<div><b>👑 '+t.name+'</b></div>').join("") : '<p class="note">友達5人で最初の称号!</p>';
+  prevTitles=myT.slice();
+  $("titles").innerHTML=TITLE_DEF.map(t=>{
+    const got=myT.includes(t[0]);
+    return '<div><span style="display:flex;gap:10px;align-items:center"><div class="ic'+(got?"":" g")+'">👑</div><span><b style="font-size:.86rem">'+t[1]+'</b><span class="note" style="display:block">'+t[2]+'</span></span></span>'+(got?'<span class="tag gold">獲得</span>':'<span class="tag gray">未獲得</span>')+'</div>';
+  }).join("");
   // クエスト
   const done=me.quests||[];
-  $("quests").innerHTML=QUESTS.map(q=>'<div><span><b>'+q[1]+'</b><span class="note" style="display:block">'+q[2]+'</span></span><span class="tag '+(done.includes(q[0])?'red">達成 '+q[3]:'gray">'+q[3])+'</span></div>').join("");
-  // 保有株
-  $("holds").innerHTML=(me.holdings&&me.holdings.length)? me.holdings.map(h=>'<div><span><b>'+h.code+'</b> × '+h.shares+'株</span><span class="amt">評価 '+fmt(h.shares*h.price)+'</span></div>').join("") : '<p class="note">まだ持っていません</p>';
+  $("qsum").innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline"><b>達成状況</b><span><span class="amt" style="font-size:1.3rem">'+done.length+'</span><span class="note" style="display:inline"> / 6</span></span></div><div class="gauge" style="margin-top:8px;height:10px"><div style="width:'+(done.length/6*100)+'%"></div></div><p class="note">全部達成で称号「Oh!国マスター」+100コイン</p>';
+  $("quests").innerHTML=QUESTS.map(q=>{
+    const d=done.includes(q[0]);
+    return '<div class="quest'+(d?" done":"")+'"><div class="ic'+(d?"":" g")+'">'+q[1]+'</div><div class="qm"><div class="qn">'+q[2]+'</div><p class="note">'+q[3]+'</p></div><span class="tag '+(d?'red">+'+q[4]+' 達成':'gray">+'+q[4])+'</span></div>';
+  }).join("");
+  $("holds").innerHTML=(me.holdings&&me.holdings.length)? me.holdings.map(h=>'<div><span><b>'+h.code+'</b> × '+h.shares+'株</span><span class="amt">'+fmt(h.shares*h.price)+'</span></div>').join("") : '<p class="note">まだ持っていません</p>';
+  firstMe=false;
 }
+let prevFriends=0;
 function badge(k){return {salary:"💰",relief:"🏦",correction:"🏦",bonus:"🎁",quest:"⭐️",title:"👑",friend:"🤝",friend_req:"🤝",approval:"💳",fortune:"🎰",derby:"🏇"}[k]||"📣";}
-function n0title(n){return n.title;}
-function showPop(t,b,bd){$("pop-title").textContent=t;$("pop-body").textContent=b||"";$("pop-badge").textContent=bd||"Oh!国";$("pop").style.display="flex";try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}}
 
 async function approve(id,ok){
-  try{ const r=await rpc("rpc_approve",{p_no:sess.no,p_pin:sess.pin,p_tx:id,p_accept:ok});
-    toast(ok?"✅ 支払いました":"キャンセルしました"); refresh();
+  try{ await rpc("rpc_approve",{p_no:sess.no,p_pin:sess.pin,p_tx:id,p_accept:ok});
+    toast(ok?"支払いました ✅":"キャンセルしました"); refresh();
   }catch(e){ toast(e.message,1); refresh(); }
 }
 async function frespond(id,ok){
   try{ await rpc("rpc_friend_respond",{p_no:sess.no,p_pin:sess.pin,p_fid:id,p_accept:ok});
-    toast(ok?"🤝 友達になりました!":"見送りました"); refresh();
+    if(ok){ S.stamp(); vib([80,40,80]); toast("友達になりました 🤝"); } else toast("見送りました");
+    refresh();
   }catch(e){ toast(e.message,1); refresh(); }
 }
 async function friendReq(){
-  const t=$("f-no").value.trim(); if(!t) return toast("相手の番号を入力",1);
+  const t=$("f-no").value.trim(); if(!t) return toast("相手の番号を入力してください",1);
   try{ const r=await rpc("rpc_friend_request",{p_no:sess.no,p_pin:sess.pin,p_target:t});
     $("f-no").value="";
-    toast(r.result==="accepted"?"🎉 友達成立!":"📨 申請しました。相手があなたの番号("+sess.no+")を入れれば成立");
+    if(r.result==="accepted"){ S.stamp(); vib([80,40,80]); toast("友達成立!🎉"); }
+    else toast("申請を送りました。相手があなたの番号("+sess.no+")を入れれば成立");
     refresh();
   }catch(e){ toast(e.message,1); }
 }
-
 async function renderFacilities(){
   try{
     const m=me&&me.me;
-    $("myinit").innerHTML='<b>あなたの初期勤務</b><p class="note">'+(m? m.grp+"組 ／ "+(m.initFac||"—")+"(初期勤務"+m.grp+"の時間にその店へ)":"—")+'</p>';
+    $("myinit").innerHTML='<div style="display:flex;gap:11px;align-items:center"><div class="ic">📍</div><div><b>あなたの最初の職場</b><p class="note">'+(m? m.grp+"組 ── "+(m.initFac||"—")+"(初期勤務"+m.grp+"の時間にこの店へ)":"—")+'</p></div></div>';
     const fs=await rpc("rpc_facilities",{});
-    $("facl").innerHTML=fs.map(f=>'<div><span><b>'+f.name+'</b> <span class="note">'+f.booth+'</span></span><span>'+(f.status==="OPEN"?'<span class="tag red">営業中</span>':'<span class="tag gray">準備中</span>')+' <span class="amt">'+f.working+"/"+f.cap+'</span></span></div>').join("");
+    $("facl").innerHTML=fs.map(f=>{
+      const full=f.working>=f.cap&&f.cap>0;
+      return '<div class="faci"><div class="fm"><div class="fn">'+f.name+' <span class="note" style="display:inline">'+f.booth+'</span></div><div class="capbar"><div class="'+(full?"full":"")+'" style="width:'+(f.cap?Math.min(100,f.working/f.cap*100):0)+'%"></div></div></div>'+
+        (f.status==="OPEN"? (full?'<span class="tag red">満員</span>':'<span class="tag soft">空き '+(f.cap-f.working)+'</span>') :'<span class="tag gray">準備中</span>')+'</div>';
+    }).join("");
   }catch(e){ $("facl").innerHTML='<p class="note">'+e.message+'</p>'; }
 }
 async function renderMarket(){
   try{
     const mk=await rpc("rpc_market",{});
-    if(!mk.enabled){ $("mktbox").innerHTML='<p class="note">株式市場は停止中です</p>'; return; }
-    const open=mk.window>0 && !mk.closed;
-    $("mktbox").innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center"><b>📈 Oh!証券</b>'+(mk.closed?'<span class="tag">終値確定</span>':(open?'<span class="tag red">市場'+mk.window+' 開場中</span>':'<span class="tag gray">閉場中</span>'))+'</div>'+
-      mk.companies.map(c=>'<div class="stock"><span><b>'+c.code+'</b><span class="note" style="display:block">'+c.name+'</span></span><span style="text-align:right"><span class="amt">'+fmt(c.price)+'</span>'+(open?'<div><button class="pill" onclick="order(\''+c.code+'\',\'buy\')">買う</button><button class="pill" onclick="order(\''+c.code+'\',\'sell\')">売る</button></div>':"")+'</span></div>').join("")+
-      (open?'<label>株数(1〜10)</label><input id="shares" inputmode="numeric" value="1">':"");
+    const open=mk.enabled&&mk.window>0&&!mk.closed;
+    $("mktstatus").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>Oh!証券取引所</b>'+
+      (mk.closed?'<span class="tag">終値確定</span>':(open?'<span class="tag red">市場'+mk.window+' 開場中</span>':'<span class="tag gray">閉場中(市場タイムに開く)</span>'))+'</div>'+
+      (open?'<label>1回の株数</label><div class="row" id="shsel">'+[1,3,5,10].map(n=>'<button class="pill'+(n===1?" on":"")+'" onclick="setSh(this,'+n+')">'+n+'株</button>').join("")+'</div>':"");
+    $("mktbox").innerHTML=mk.companies.map(c=>
+      '<div class="stockcard"><div class="top"><span><span class="code">'+c.code+'</span> <span class="nm">'+c.name+'</span></span><span class="pr">'+fmt(c.price)+'</span></div>'+
+      (open?'<div class="acts"><button class="buyb" onclick="order(\''+c.code+'\',\'buy\')">買う</button><button class="sellb" onclick="order(\''+c.code+'\',\'sell\')">売る</button></div>':"")+'</div>').join("");
   }catch(e){ $("mktbox").innerHTML='<p class="note">'+e.message+'</p>'; }
 }
+let SH=1;
+function setSh(el,n){ SH=n; document.querySelectorAll("#shsel .pill").forEach(p=>p.classList.remove("on")); el.classList.add("on"); }
 async function order(code,side){
-  const sh=parseInt(($("shares")&&$("shares").value)||"1",10);
-  try{ const r=await rpc("rpc_market_order",{p_no:sess.no,p_pin:sess.pin,p_code:code,p_side:side,p_shares:sh});
-    toast("✅ 約定:"+code+" "+(side==="buy"?"買い":"売り")+" "+sh+"株("+fmt(r.total)+"コイン)");
+  try{ const r=await rpc("rpc_market_order",{p_no:sess.no,p_pin:sess.pin,p_code:code,p_side:side,p_shares:SH});
+    if(side==="buy")S.coin();
+    toast((side==="buy"?"買いました":"売りました")+":"+code+" "+SH+"株("+fmt(r.total)+"コイン)");
     refresh(); renderMarket();
+  }catch(e){ toast(e.message,1); }
+}
+
+/* ===== ダービー ===== */
+async function renderDerby(){
+  try{
+    const d=await rpc("rpc_derby",{p_no:sess.no,p_pin:sess.pin});
+    if(!d.state||d.state==="closed"){ $("derbybox").innerHTML='<p class="note">開催をお楽しみに(ギャンブルブースでエントリー受付)</p>'; return; }
+    const maxV=Math.max(1,...(d.runners||[]).map(r=>r.votes));
+    const st=d.state==="betting"?'<span class="tag red">馬券 発売中!</span>':(d.state==="racing"?'<span class="tag">🏇 レース中</span>':'<span class="tag gold">結果確定</span>');
+    let h='<div style="display:flex;justify-content:space-between;align-items:center"><b>🏇 出馬表</b>'+st+'</div>';
+    h+=(d.runners||[]).map(r=>{
+      const L=r.name.slice(-1);
+      const win=d.state==="settled"&&d.winner===r.pid;
+      return '<div style="padding:9px 0;border-bottom:1px solid var(--line)'+(win?';background:#FFF8E0':'')+'"><div style="display:flex;justify-content:space-between"><span><span class="tag'+(win?" gold":"")+'">'+L+'枠</span> <b>'+(r.runner||"出走馬 未定")+'</b>'+(win?" 🏆":"")+'</span><span class="note">'+r.votes+'票</span></div><div class="votebar"><div style="width:'+(r.votes/maxV*100)+'%"></div></div></div>';
+    }).join("");
+    if(d.state==="betting") h+='<p class="note">投票券は1枚100コイン、ギャンブルブースのレジで購入。的中で3倍!</p>';
+    if(d.mine&&d.mine.length){
+      h+='<label style="margin-top:12px">あなたの馬券</label>'+d.mine.map(t=>'<div class="tik" style="margin:4px 6px 0 0"><div class="th">OH!KOKU KEIBA ── '+t.name.slice(-1)+'枠</div><div class="tn">'+(t.runner||t.name.slice(-1))+' に '+fmt(t.amount)+'</div></div>').join("");
+    }
+    $("derbybox").innerHTML=h;
+  }catch(e){}
+}
+async function derbyResult(){
+  try{
+    const d=await rpc("rpc_derby",{p_no:sess.no,p_pin:sess.pin});
+    if(!d.mine||!d.mine.length) return;
+    const win=d.mine.filter(t=>t.pid===d.winner);
+    if(win.length){
+      const amt=win.reduce((a,t)=>a+t.amount,0)*3;
+      $("win-t").textContent="的中!!";
+      $("win-b").textContent="+"+fmt(amt)+"コイン獲得!";
+      $("win-ov").classList.add("on");
+      S.win(); rain(["🎊","🪙","✨"],26); vib([150,60,150,60,300]);
+    }else{
+      const t=d.mine[0];
+      $("lose-t").textContent=(t.runner||t.name.slice(-1))+" に "+fmt(t.amount);
+      $("lose-ov").classList.add("on"); S.sad(); vib([250]);
+    }
+  }catch(e){}
+}
+
+/* ===== リザルト ===== */
+async function showResult(){
+  try{
+    const s=await rpc("rpc_my_stats",{p_no:sess.no,p_pin:sess.pin});
+    const total=s.balance+s.stockv;
+    $("result-ov").innerHTML='<div class="pass" style="max-width:360px;width:100%">'+
+      '<div class="pass-band"><span>あなたのOh!国人生</span><span>'+s.dept+'</span></div>'+
+      '<div style="padding:18px 16px;color:#fff">'+
+      '<div style="text-align:center"><div style="font-size:.72rem;color:#A6A6AD">'+(s.fortune||"")+'('+fmt(s.initial)+')から</div>'+
+      '<div style="font-size:2.4rem;font-weight:800" id="rvtotal">0</div><div style="font-size:.72rem;color:#A6A6AD">最終総資産(現金 '+fmt(s.balance)+' + 株 '+fmt(s.stockv)+')</div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;text-align:center;font-size:.78rem">'+
+      '<div style="background:#26262C;border-radius:12px;padding:10px"><b style="font-size:1.2rem">'+s.works+'</b><br>働いた回数</div>'+
+      '<div style="background:#26262C;border-radius:12px;padding:10px"><b style="font-size:1.2rem">'+s.friends+'</b><br>友達</div>'+
+      '<div style="background:#26262C;border-radius:12px;padding:10px"><b style="font-size:1.2rem">'+s.titles+'</b><br>称号</div>'+
+      '<div style="background:#26262C;border-radius:12px;padding:10px"><b style="font-size:1.2rem">'+s.quests+'/6</b><br>クエスト</div></div>'+
+      '<p style="text-align:center;font-size:.68rem;color:#A6A6AD;margin-top:14px">スクショして自慢しよう 📸</p></div></div>'+
+      '<button class="btn ghost" style="max-width:360px;margin-top:12px" onclick="$(\'result-ov\').classList.remove(\'on\')">とじる</button>';
+    $("result-ov").classList.add("on");
+    S.fanfare(); rain(["🎊","✨"],20);
+    countTo($("rvtotal"),0,total,1200);
   }catch(e){ toast(e.message,1); }
 }
 
