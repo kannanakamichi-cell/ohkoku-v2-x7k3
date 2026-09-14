@@ -122,7 +122,7 @@
 
 <section class="screen" id="s-work">
   <div class="card" id="myinit"></div>
-  <h2 class="sec">お店の空き状況<button class="qh" onclick="help('work')">?</button></h2>
+  <h2 class="sec">お店ガイド<button class="qh" onclick="help('work')">?</button><span class="note" style="margin:0 0 0 auto;font-weight:400">行をタップでメニュー</span></h2>
   <div class="card" id="facl">読み込み中…</div>
   <div class="card" style="background:var(--ac-soft);border-color:#FFD3D9">
     <b style="font-size:.86rem">💡 はたらき方</b>
@@ -138,6 +138,8 @@
   <div class="card list" id="holds"><p class="note">まだ持っていません</p></div>
   <h2 class="sec">Oh!国ダービー<button class="qh" onclick="help('derby')">?</button></h2>
   <div class="card" id="derbybox"><p class="note">開催をお楽しみに(ギャンブルブースでエントリー受付)</p></div>
+  <h2 class="sec">宝くじ<button class="qh" onclick="help('lottery')">?</button></h2>
+  <div class="card" id="lotbox"><p class="note">読み込み中…</p></div>
 </section>
 
 <section class="screen" id="s-frd">
@@ -183,8 +185,10 @@
   <div class="res" id="gres">
     <div class="flbl">あなたの人生は……</div>
     <div class="fname" id="gname"></div>
+    <div id="gstars" style="font-size:1.5rem;letter-spacing:.15em;margin:2px 0"></div>
+    <div id="grank" style="font-size:.8rem;font-weight:800;margin-bottom:6px"></div>
     <div class="famt"><span id="gamt">0</span><span style="font-size:1rem;color:#9A9AA2"> コイン</span></div>
-    <div class="flbl">からのスタート</div>
+    <div class="flbl">からのスタート(国民平均は約1,025コイン)</div>
     <button class="btn pri" style="margin-top:20px;position:relative;z-index:5" onclick="gachaClose(event)">パスポートを受け取る</button>
   </div>
 </div>
@@ -261,7 +265,7 @@ document.querySelectorAll("nav button").forEach(b=>{
     document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
     $("s-"+b.dataset.s).classList.add("on");
     if(b.dataset.s==="work") renderFacilities();
-    if(b.dataset.s==="mkt"){ renderMarket(); renderDerby(); }
+    if(b.dataset.s==="mkt"){ renderMarket(); renderDerby(); renderLottery(); }
   };
 });
 
@@ -289,6 +293,14 @@ function gachaTap(){
     $("gacha").classList.add("t"+t);
     $("gres").style.display="block";
     $("gname").textContent=me.me.fortune||"🙂 ふつう";
+    const RANK={5:["★★★★★","🎉 大当たり!国民の上位8%だけの豪華スタート","#F3D97E"],
+                4:["★★★★","当たり!上位28%のリッチ層","#E8C64F"],
+                3:["★★★","標準(いちばん多い44%)。ここからが本番","#DDD"],
+                2:["★★","ちょっと不運…下位28%。でも給与はみんな同じ500","#C9C6C0"],
+                1:["★","大ハズレ…下位8%。だが『成り上がり賞』の最有力候補はあなただ","#FF8A9A"]};
+    const rk=RANK[t];
+    $("gstars").textContent=rk[0]; $("gstars").style.color=rk[2];
+    $("grank").textContent=rk[1]; $("grank").style.color=rk[2];
     if(t>=4){ S.fanfare(); rain(t===5?["🎊","✨","💎","🪙"]:["✨","🪙"],26); }
     else if(t===1){ S.sad(); rain(["💧"],22); }
     else if(t===2){ S.stamp(); }
@@ -312,6 +324,8 @@ function enter(){
 async function refresh(){
   if(!sess) return;
   try{ me = await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); render(); }catch(e){}
+  lotTick++;
+  if(lotTick%5===0){ try{ const lo=await rpc("rpc_lottery",{}); checkLottery(lo); }catch(e){} }
 }
 let pollT=null;
 function startPoll(){ if(pollT)clearInterval(pollT); pollT=setInterval(refresh,3000); }
@@ -432,6 +446,7 @@ const HELP={
  work:["💼","はたらき方","・1回の勤務は12分、給与はどの店も500コイン\n・店に行って店長に「働きたいです」と伝えるだけ\n・フェーズが終わると自動で完了&給与振込\n・「空き◯」=いま入れる/「満員」=次を待つ/「準備中」=営業時間外\n・43分までは割り当ての店(初期勤務)のみ、以降は自由\n・お金に困ったら銀行へ(救済給付があります)"],
  stock:["📈","株式市場のルール","・売買できるのは市場タイム3回だけ(①67分〜/②87分〜/③107分〜)\n・1つの市場で買い1回・売り1回、1回10株まで、手数料なし\n・株価はみんなの売買で決まる:買いが集まった銘柄は次の市場で上がり、売られると下がる\n・115分に終値が確定。持ち株は終値で総資産に自動換算されるので、売りそびれても大丈夫\n・他部署の人と同じ銘柄を買うとクエスト「共同投資」達成!"],
  derby:["🏇","Oh!国ダービーの遊び方","・走るのは抽選で選ばれた6人の同僚!\n・投票券は1枠100コイン、ギャンブルブース(B09)のレジで購入\n・レースは自由勤務3の冒頭、実物の台で開催\n・的中したら3倍(100→300)が自動で振り込まれる\n・出走した本人が優勝すると賞金1,000!\n・出馬表の人気バーで「どの馬が買われているか」が丸見えです"],
+ lottery:["🎫","宝くじのルール","・1枚100コイン、1人3枚まで。このスマホから直接買えます\n・売上の全額が賞金ポットに!買われるほど当たりが育つ\n・抽選は政府の気まぐれなタイミングで実施。当選者1名がポットを総取り\n・抽選後は次の回がスタート(また3枚買えます)"],
  friend:["🤝","友達のつくり方","・お互いに相手の番号を入力すると、その場で成立\n・片方だけなら相手に通知が届き、3分以内にOKで成立\n・📷QRボタンで相手のパスポートQRを読めば入力いらず\n・申請は1分に6件まで\n・国家事件(2回あります)では、友達の成立数が国の運命を決めます。他部署・レア部署の友達は特に価値が高い!"],
  title:["👑","称号のとり方","友達やクエストを集めると称号+ボーナス:\n・ご近所さん=友達5人(+50)\n・顔が広い=友達10人(+100)\n・Oh!国の有名人=友達20人(+200)\n・国際人=自分以外の5部署に友達(+200)\n・Oh!国マスター=クエスト全6種を達成(+100)\n称号は「人気者」賞の自慢材料にもなります"]};
 function help(k){
@@ -450,6 +465,37 @@ function qdetail(code){
   $("pop-body").textContent=q[5]+" ── 報酬:+"+q[4]+"コイン"+(d?"(受取済み)":"");
   document.querySelector(".pop").classList.remove("gold","big");
   $("pop").style.display="flex";
+}
+const FINFO={
+ F03:"☕️ ペアクエスト「相席」対象店:他部署の人と一緒に注文して店長に記録してもらおう(+30/人)",
+ F06:"🥊 ペアクエスト「ライバル」対象店:他部署の人と対戦して記録(+50/人)",
+ F10:"🏀 ペアクエスト「ダブルス」対象店:他部署の人とペア挑戦で記録(+50/人)",
+ F11:"🏇 ダービーの投票券もここで販売(開催中のみ)。コインゲームで一攫千金を狙え",
+ F01:"🍱 昼休み限定営業。基本弁当は無料・1人1個!アップグレードは早い者勝ち",
+ F02:"🍨 開国87分(自由勤務2)から開店のスペシャル店",
+ F12:"🔮 何が聞けるかは、占い師のみぞ知る…",
+ F15:"📻 ラジオ出演や写真撮影ができる、国営メディアの本拠地"};
+async function fdetail(fid,fname,booth){
+  try{
+    const ps=await tbl("product?select=name,price,stock,per_person_limit&facility_id=eq."+fid+"&active=eq.true&order=price.asc");
+    let body="";
+    if(ps.length){
+      body=ps.map(p=>{
+        const price=p.price===0?"無料":fmt(p.price)+"コイン";
+        const lim=p.per_person_limit?"(1人"+p.per_person_limit+"個)":"";
+        const ap=p.price>500?" ※要スマホ承認":"";
+        const st=p.stock>=999?"":(p.stock<=0?" ── 売り切れ":" ── 残り"+p.stock);
+        return "・"+p.name+" ── "+price+lim+ap+st;
+      }).join("\n");
+    }else body="メニューは店頭でお確かめください";
+    if(FINFO[fid]) body+="\n\n"+FINFO[fid];
+    body+="\n\n支払いはレジでパスポートQRを見せるだけ(601コイン以上はスマホに承認が出ます)";
+    $("pop-badge").textContent="🏪 "+booth;
+    $("pop-title").textContent=fname+" のメニュー";
+    $("pop-body").textContent=body;
+    document.querySelector(".pop").classList.remove("gold","big");
+    $("pop").style.display="flex";
+  }catch(e){ toast(e.message,1); }
 }
 function badge(k){return {salary:"💰",relief:"🏦",correction:"🏦",bonus:"🎁",quest:"⭐️",title:"👑",friend:"🤝",friend_req:"🤝",approval:"💳",fortune:"🎰",derby:"🏇"}[k]||"📣";}
 
@@ -483,7 +529,7 @@ async function renderFacilities(){
     window.FSN={}; fs.forEach(f=>FSN[f.id]=f.name);
     $("facl").innerHTML=fs.map(f=>{
       const full=f.working>=f.cap&&f.cap>0;
-      return '<div class="faci"><div class="fm"><div class="fn">'+f.name+' <span class="note" style="display:inline">'+f.booth+'</span></div><div class="capbar"><div class="'+(full?"full":"")+'" style="width:'+(f.cap?Math.min(100,f.working/f.cap*100):0)+'%"></div></div></div>'+
+      return '<div class="faci" style="cursor:pointer" onclick="fdetail(\''+f.id+'\',\''+f.name+'\',\''+f.booth+'\')"><div class="fm"><div class="fn">'+f.name+' <span class="note" style="display:inline">'+f.booth+'</span></div><div class="capbar"><div class="'+(full?"full":"")+'" style="width:'+(f.cap?Math.min(100,f.working/f.cap*100):0)+'%"></div></div></div>'+
         (f.status==="OPEN"? (full?'<span class="tag red">満員</span>':'<span class="tag soft">空き '+(f.cap-f.working)+'</span>') :'<span class="tag gray">準備中</span>')+'</div>';
     }).join("");
   }catch(e){ $("facl").innerHTML='<p class="note">'+e.message+'</p>'; }
@@ -513,6 +559,43 @@ async function order(code,side){
     toast((side==="buy"?"買いました":"売りました")+":"+code+" "+SH+"株("+fmt(r.total)+"コイン)");
     refresh(); renderMarket();
   }catch(e){ toast(e.message,1); }
+}
+
+/* ===== 宝くじ ===== */
+let LOT=null, seenLotRound=loadS("lot_seen")||0, lotTick=0;
+async function renderLottery(){
+  try{
+    LOT=await rpc("rpc_lottery",{p_no:sess.no,p_pin:sess.pin});
+    const left=LOT.maxPer-(LOT.mine||0);
+    $("lotbox").innerHTML=
+      '<div style="text-align:center"><span class="note">第'+LOT.round+'回 ── 現在の賞金ポット</span>'+
+      '<div style="font-size:2rem;font-weight:800;color:var(--ac)">'+fmt(LOT.pot)+'<span style="font-size:.8rem;color:var(--sub)"> コイン</span></div>'+
+      '<span class="note">'+LOT.buyers+'人が参加中 ── 当選者1名が総取り</span></div>'+
+      (left>0?'<button class="btn pri" onclick="lotBuy()">🎫 1枚買う('+LOT.price+'コイン)── あなた '+(LOT.mine||0)+'/'+LOT.maxPer+'枚</button>':
+       '<p class="note" style="text-align:center;margin-top:10px">この回はあなたの上限('+LOT.maxPer+'枚)に達しました。抽選を待とう…🙏</p>');
+  }catch(e){ $("lotbox").innerHTML='<p class="note">'+e.message+'</p>'; }
+}
+async function lotBuy(){
+  try{ const r=await rpc("rpc_lottery_buy",{p_no:sess.no,p_pin:sess.pin,p_qty:1});
+    S.coin(); toast("🎫 購入!ポットが "+fmt(r.pot)+" コインに育ちました");
+    refresh(); renderLottery();
+  }catch(e){ toast(e.message,1); }
+}
+function checkLottery(lo){
+  const res=lo&&lo.result;
+  if(res&&res.round&&res.round>seenLotRound){
+    seenLotRound=res.round; saveS("lot_seen",seenLotRound);
+    if(!firstMe){
+      if(res.winner===sess.no){
+        $("win-t").textContent="🎫 宝くじ 大当たり!!";
+        $("win-b").textContent="第"+res.round+"回 ── ポット全額 +"+fmt(res.pot)+"コイン!";
+        $("win-ov").classList.add("on"); S.win(); rain(["🎊","🪙","✨","💴"],28); vib([200,80,200,80,400]);
+      }else{
+        showPop("第"+res.round+"回 宝くじ 結果発表","当選者は "+res.name+" さん!(賞金 "+fmt(res.pot)+"コイン)","🎫 宝くじ");
+        S.sad();
+      }
+    }
+  }
 }
 
 /* ===== ダービー ===== */

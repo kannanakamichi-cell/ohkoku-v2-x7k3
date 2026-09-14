@@ -83,6 +83,8 @@ table.tb td,table.tb th{white-space:nowrap}
         <button class="btn mini pri" style="margin:0;padding:12px" onclick="derbySettle()">🏁 清算</button>
       </div>
       <p class="note">清算=的中券3倍の払い戻し+優勝者に賞金1,000を国庫から一括支払い。</p>
+      <label style="margin-top:14px">🎫 宝くじ <span class="note" style="display:inline" id="lotinfo"></span></label>
+      <button class="btn dark" onclick="lotDraw()">抽選する(当選者1名がポット総取り・全員に速報)</button>
     </div>
 
     <h2 class="sec">店舗の強制ステータス</h2>
@@ -140,7 +142,7 @@ async function enter(){
   const dp=await tbl("product?select=id,name&facility_id=eq.F11&order=id.asc");
   $("d-win").innerHTML=dp.filter(p=>p.name.includes("ダービー")).map(p=>'<option value="'+p.id+'">'+p.name.replace("ダービー投票券","勝者:")+'</option>').join("");
   doTick(); tick=setInterval(doTick,4000);
-  loadDash();
+  loadDash(); lotInfo();
 }
 async function doTick(){
   try{
@@ -197,6 +199,18 @@ async function paper(){ const ev=await loadEvent(); try{ await rpc("rpc_gov_pape
 async function mission(){ const n=parseInt($("mdone").value,10); if(isNaN(n))return toast("数を入力",1);
   try{ await rpc("rpc_gov_mission",{p_key:KEY,p_done:n}); toast("📝 記録しました"); }catch(e){ toast(e.message,1); } }
 async function facSt(){ try{ await rpc("rpc_gov_facility",{p_key:KEY,p_fid:$("f-sel").value,p_status:$("f-st").value}); toast("適用しました"); }catch(e){ toast(e.message,1); } }
+async function lotDraw(){
+  if(!confirm("宝くじを抽選します。当選者1名にポット全額が振り込まれ、全市民に発表されます。よろしいですか?"))return;
+  try{ const r=await rpc("rpc_lottery_draw",{p_key:KEY});
+    toast("🎉 当選:"+r.name+"さん(+"+fmt(r.pot)+"コイン)"); lotInfo();
+  }catch(e){ toast(e.message,1); }
+}
+async function lotInfo(){
+  try{ const lo=await rpc("rpc_lottery",{});
+    $("lotinfo").textContent="── 第"+lo.round+"回:ポット "+fmt(lo.pot)+"コイン("+lo.buyers+"人参加)";
+  }catch(e){}
+  setTimeout(lotInfo,12000);
+}
 async function derbyOpen(){ try{ await rpc("rpc_derby_open",{p_key:KEY}); toast("🏇 馬券の発売を開始しました(全市民に出馬表が出ます)"); }catch(e){ toast(e.message,1); } }
 async function derbyEntrants(){
   const names=["e1","e2","e3","e4","e5","e6"].map(id=>$(id).value.trim());

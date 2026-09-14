@@ -32,10 +32,37 @@ main{max-width:1100px;padding:34px}
   </div>
   <div class="card" id="mkt"></div>
   <div class="card" id="derby" style="display:none"></div>
+  <div class="card" id="board" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <b style="font-size:20px" id="bd-title">👑 リアルタイム番付</b>
+      <span class="note" id="bd-sub"></span>
+    </div>
+    <div id="bd-rows" style="margin-top:10px"></div>
+  </div>
   <div class="card" id="awards" style="display:none"></div>
 </main>
 <script src="ohk.js"></script>
 <script>
+const CATS=[["richest","👑 総資産番付","コイン"],["riser","🚀 成り上がり番付","コイン増"],["investor","📈 投資家番付","コイン分の株"],["spender","🛍 消費王番付","コイン消費"],["worker","💪 働き者番付","回勤務"],["popular","🤝 人気者番付","人の友達"]];
+let AW=null, awIdx=0, awTick=0;
+const MEDAL=["🥇","🥈","🥉","4","5"];
+function renderBoard(){
+  const box=document.getElementById("board");
+  if(!AW){ box.style.display="none"; return; }
+  const [k,label,unit]=CATS[awIdx%CATS.length];
+  const rows=AW[k]||[];
+  if(!rows.length){ box.style.display="none"; return; }
+  box.style.display="block";
+  document.getElementById("bd-title").textContent=label;
+  document.getElementById("bd-sub").textContent="8秒ごとに部門が切り替わります";
+  const mx=Math.max(1,...rows.map(r=>r.v));
+  document.getElementById("bd-rows").innerHTML=rows.map((r,i)=>
+    '<div style="display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid #2A2A30'+(i===0?';color:#F3D97E':'')+'">'+
+    '<b style="width:40px;font-size:'+(i===0?'26px':'18px')+'">'+MEDAL[i]+'</b>'+
+    '<span style="flex:1;font-size:'+(i===0?'26px':'19px')+';font-weight:800">'+r.display_name+' <span class="note" style="font-size:12px">'+r.department_id+'</span></span>'+
+    '<span style="font-size:'+(i===0?'24px':'17px')+';font-weight:800;font-variant-numeric:tabular-nums">'+fmt(r.v)+'<span class="note" style="font-size:11px"> '+unit+'</span></span>'+
+    '<div style="width:200px" class="gauge"><div style="width:'+(r.v/mx*100)+'%"></div></div></div>').join("");
+}
 async function loop(){
   try{
     const s=await rpc("rpc_screen",{});
@@ -76,6 +103,15 @@ async function loop(){
           }).join("");
       } else box.style.display="none";
     }catch(e){}
+    // リアルタイム番付(集計以降は表彰の発表まで隠す)
+    const hideBoard=["TALLY","RESULTS","CLOSED"].includes(c.ph.id) || !ev.opened_at;
+    if(hideBoard){ AW=null; renderBoard(); }
+    else{
+      if(awTick%3===0){ try{ AW=await rpc("rpc_awards",{}); }catch(e){} }
+      awTick++;
+      if(awTick%2===0) awIdx++;
+      renderBoard();
+    }
     if(c.ph.id==="RESULTS"||c.ph.id==="CLOSED"){
       const a=await rpc("rpc_awards",{});
       const N={richest:"👑 総資産",riser:"🚀 成り上がり",investor:"📈 投資家",spender:"🛍 消費王",worker:"💪 働き者",popular:"🤝 人気者"};
