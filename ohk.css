@@ -1,18 +1,19 @@
-:root{--ac:#FF2E47;--ac-soft:#FFEDEF;--ink:#17171A;--bg:#F7F6F4;--card:#FFFFFF;--line:#E7E5E1;--sub:#7A7772;--gold:#C9A227;--ok:#0A9944}
+@import url("https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap");
+:root{--ac:#E23B2E;--ac-soft:#FBEAE2;--ink:#2B2418;--bg:#F3ECDC;--card:#FFFDF6;--line:#E6DCC4;--sub:#8A7B60;--gold:#C9A227;--ok:#4A7A3A;--wood1:#D4593B;--wood2:#B23A25;--wood3:#9C2F1D;--woodedge:#6E1F12}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{font-size:16px}
 body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--ink);font-size:.9rem;line-height:1.6;padding-bottom:76px}
 /* ---------- ヘッダー ---------- */
 header{background:var(--ink);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-header .ttl{font-weight:800;letter-spacing:.04em;display:flex;align-items:center;gap:8px;font-size:1rem}
+header .ttl{font-family:"Yusei Magic",sans-serif;font-weight:400;letter-spacing:.06em;display:flex;align-items:center;gap:8px;font-size:1.05rem}
 header .ttl i{font-style:normal;color:var(--ac);font-size:1.15rem}
 header .ph{font-size:.68rem;color:#BDBDC2;text-align:right;line-height:1.5}
 header .ph b{color:#fff;font-size:.8rem}
 main{max-width:520px;margin:0 auto;padding:14px 14px 0}
 /* ---------- 見出し・カード ---------- */
-h2.sec{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--ink);margin:20px 0 8px;font-weight:800}
+h2.sec{display:flex;align-items:center;gap:8px;font-size:.92rem;color:var(--ink);margin:20px 0 8px;font-family:"Yusei Magic",sans-serif;font-weight:400}
 h2.sec::before{content:"";width:4px;height:14px;background:var(--ac);border-radius:2px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px;box-shadow:0 2px 10px rgba(120,95,50,.07)}
 .note{font-size:.72rem;color:var(--sub);line-height:1.75;margin-top:6px}
 label{display:block;font-size:.72rem;color:var(--sub);margin:12px 0 5px;font-weight:700}
 input,select,textarea{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;font-size:1rem;font-family:inherit;background:#fff;color:var(--ink)}
@@ -21,7 +22,8 @@ button{font-family:inherit;cursor:pointer}
 /* ---------- ボタン ---------- */
 .btn{display:block;width:100%;padding:14px;border:none;border-radius:13px;font-size:.95rem;font-weight:800;margin-top:10px;transition:transform .06s}
 .btn:active{transform:scale(.98)}
-.btn.pri{background:var(--ac);color:#fff;box-shadow:0 3px 12px rgba(255,46,71,.28)}
+.btn.pri{font-family:"Yusei Magic",sans-serif;font-weight:400;letter-spacing:.12em;color:#FFF6E8;background:linear-gradient(180deg,var(--wood1),var(--wood2) 55%,var(--wood3));box-shadow:0 3px 0 var(--woodedge),0 8px 18px rgba(110,30,15,.3),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.pri:active{transform:translateY(2px);box-shadow:0 1px 0 var(--woodedge)}
 .btn.dark{background:var(--ink);color:#fff}
 .btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
 .btn.mini{width:auto;display:inline-block;padding:10px 14px;font-size:.8rem;margin:0}
@@ -71,7 +73,7 @@ button{font-family:inherit;cursor:pointer}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,46,71,.25)}50%{box-shadow:0 0 0 7px rgba(255,46,71,0)}}
 .urgent h4{font-size:.95rem;display:flex;align-items:center;gap:7px}
 /* ---------- タブナビ ---------- */
-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;z-index:10;padding:6px 8px calc(8px + env(safe-area-inset-bottom))}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,253,246,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;z-index:10;padding:6px 8px calc(8px + env(safe-area-inset-bottom))}
 nav button{flex:1;background:none;border:none;padding:7px 0;font-size:.62rem;color:#9A978F;font-weight:700;border-radius:12px}
 nav button span{display:block;font-size:1.25rem;margin-bottom:1px;filter:grayscale(1);opacity:.55}
 nav button.on{color:var(--ac);background:var(--ac-soft)}
@@ -95,7 +97,7 @@ nav button .bdg::after{content:"";position:absolute;top:-2px;right:-8px;width:8p
 #scan-ov video{width:86%;max-width:380px;border-radius:16px}
 #scan-ov p{color:#fff;font-size:.78rem}
 /* ---------- 株 ---------- */
-.stockcard{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;background:#fff}
+.stockcard{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;background:var(--card)}
 .stockcard .top{display:flex;justify-content:space-between;align-items:baseline}
 .stockcard .code{font-weight:800;font-size:.95rem}
 .stockcard .nm{font-size:.7rem;color:var(--sub)}

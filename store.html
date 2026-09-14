@@ -69,6 +69,20 @@
     </div>
   </div>
 
+  <div id="giftBox" style="display:none">
+    <h2 class="sec">💐 花を贈る</h2>
+    <div class="card">
+      <p class="note">お代は贈り主から。お相手のスマホに「◯◯さんから花束が届きました」の通知が飛びます。</p>
+      <label>商品</label>
+      <select id="g-sel"></select>
+      <div class="row">
+        <input id="g-from" inputmode="numeric" placeholder="贈り主の番号">
+        <input id="g-to" inputmode="numeric" placeholder="お相手の番号">
+      </div>
+      <button class="btn pri" onclick="gift()">💐 贈る(購入+お届け通知)</button>
+    </div>
+  </div>
+
   <div id="bankBox" style="display:none">
     <h2 class="sec">🏦 銀行窓口</h2>
     <div class="card">
@@ -98,7 +112,7 @@
 <script>
 document.write(scanOverlayHTML());
 let KEY=null, FID=null, FAC=null, PRODS=[];
-const PAIR={F06:"🥊 ライバル:他部署の2人が対戦したら記録(+50/人)",F03:"☕️ 相席:他部署の2人が一緒に注文したら記録(+30/人)",F10:"🏀 ダブルス:他部署の2人がペア挑戦したら記録(+50/人)"};
+const PAIR={F06:"🥊 ライバル:他部署の2人が対戦したら記録(+50/人)",F03:"☕️ 相席:他部署の2人が一緒に注文したら記録(+30/人)",F11:"🎯 ダブルス:他部署の2人がペア挑戦したら記録(+50/人)"};
 
 async function login(){
   const k=$("l-key").value.trim(); if(!k) return toast("店舗キーを入力",1);
@@ -117,10 +131,12 @@ async function enter(){
   $("hfac").textContent=FAC.name;
   if(PAIR[FID]){ $("pairBox").style.display="block"; $("pairdesc").textContent=PAIR[FID]; }
   if(FID==="F13"){ $("bankBox").style.display="block"; const bs=loadS("ohk_b"); if(bs)$("b-key").value=bs.k; }
+  if(FID==="F08"){ $("giftBox").style.display="block"; }
   await loadProds(); poll(); setInterval(poll,5000);
 }
 async function loadProds(){
   PRODS=await tbl("product?select=id,name,price,stock,per_person_limit&facility_id=eq."+FID+"&active=eq.true&order=id.asc");
+  if(FID==="F08"&&$("g-sel")) $("g-sel").innerHTML=PRODS.map(p=>'<option value="'+p.id+'">'+p.name+"("+fmt(p.price)+")</option>").join("");
   $("p-sel").innerHTML=PRODS.map(p=>'<option value="'+p.id+'">'+p.name+"("+fmt(p.price)+")</option>").join("")||"<option>商品なし</option>";
   $("stocks").innerHTML=PRODS.map(p=>'<div><span>'+p.name+(p.per_person_limit?' <span class="tag">1人'+p.per_person_limit+'個</span>':"")+'</span><span class="amt">'+fmt(p.price)+' ／ 残'+p.stock+'</span></div>').join("");
 }
@@ -166,6 +182,14 @@ async function pairQuest(){
   if(!a||!b) return toast("2人の番号を入力",1);
   try{ await rpc("rpc_pair_quest",{p_key:KEY,p_no1:a,p_no2:b});
     toast("⭐️ 2人にクエスト達成を記録しました"); $("pq1").value="";$("pq2").value="";
+  }catch(e){ toast(e.message,1); }
+}
+async function gift(){
+  const a=$("g-from").value.trim(), b=$("g-to").value.trim(), pid=parseInt($("g-sel").value,10);
+  if(!a||!b) return toast("贈り主とお相手の番号を入力",1);
+  try{ await rpc("rpc_gift",{p_key:KEY,p_from:a,p_to:b,p_product:pid});
+    toast("💐 お届けしました!相手のスマホに通知が飛びます");
+    $("g-from").value="";$("g-to").value=""; loadProds();
   }catch(e){ toast(e.message,1); }
 }
 async function bank(kind,sign){

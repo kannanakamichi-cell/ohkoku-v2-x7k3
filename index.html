@@ -3,14 +3,40 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Oh!国</title>
+<link rel="icon" href="emblem.png">
 <link rel="stylesheet" href="ohk.css">
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
+/* ===== 入国画面(ファンタジー) ===== */
+body.gate header,body.gate nav{display:none}
+body.gate{padding-bottom:0}
+body.gate main{max-width:none;padding:0}
+#s-login{min-height:100vh;background-image:url('bg.jpg'),linear-gradient(180deg,#7EC4EE 0%,#A8DCF5 45%,#CBEAD2 78%,#9CC98F 100%);background-size:cover;background-position:center 30%;display:none;flex-direction:column;align-items:center;justify-content:center;padding:34px 18px 46px;position:relative}
+#s-login.on{display:flex}
+.lg-title{font-family:"Yusei Magic",sans-serif;color:#fff;font-size:2.4rem;letter-spacing:.04em;text-shadow:0 3px 0 rgba(60,90,140,.35),0 8px 22px rgba(30,60,110,.4);text-align:center;line-height:1.2}
+.lg-crown{text-align:center;font-size:1.8rem;filter:drop-shadow(0 3px 6px rgba(120,90,0,.4))}
+.lg-copy{font-family:"Yusei Magic",sans-serif;color:#fff;text-align:center;font-size:1rem;margin-top:10px;text-shadow:0 2px 8px rgba(30,60,110,.5)}
+.lg-copy small{font-size:.8rem;margin-top:6px;border-bottom:2.5px solid #FFD65C;display:inline-block;padding-bottom:3px}
+.parch{background:linear-gradient(175deg,#FAF0DA,#F2E3C4);border-radius:14px;max-width:430px;width:100%;margin-top:22px;padding:22px 20px 18px;box-shadow:0 14px 40px rgba(40,60,30,.35),inset 0 0 0 1px rgba(140,110,60,.25),inset 0 0 34px rgba(150,115,55,.14)}
+.parch label{color:#6B5836;font-size:.78rem;font-weight:800;margin:12px 0 6px;display:block}
+.parch input{border:1.5px solid #D8C6A0;background:#FFFDF7;border-radius:12px}
+.parch input:focus{outline-color:#C96A2B;border-color:#C96A2B}
+.woodbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;margin-top:16px;border:none;border-radius:12px;font-family:"Yusei Magic",sans-serif;font-size:1.15rem;color:#FFF6E8;background:linear-gradient(180deg,#D4593B,#B23A25 55%,#9C2F1D);box-shadow:0 4px 0 #6E1F12,0 10px 22px rgba(110,30,15,.45),inset 0 1px 0 rgba(255,255,255,.35);letter-spacing:.2em;cursor:pointer}
+.woodbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #6E1F12}
+.parch .note{color:#8A7450;text-align:center}
+.lg-foot{font-family:"Yusei Magic",sans-serif;color:#fff;text-align:center;margin-top:26px;font-size:.72rem;letter-spacing:.28em;text-shadow:0 2px 8px rgba(30,60,110,.5)}
+.lg-foot b{display:block;font-size:.85rem;margin-bottom:4px}
+.lg-mascot{position:absolute;left:2%;bottom:0;height:200px;pointer-events:none}
+.lg-logo{position:absolute;top:18px;left:20px;color:#fff;font-family:"Yusei Magic",sans-serif;font-size:1.3rem;text-shadow:0 2px 8px rgba(30,60,110,.5)}
+.lg-logo small{display:block;font-size:.5rem;letter-spacing:.3em}
+.lg-brand{position:absolute;top:22px;right:22px;color:#fff;font-weight:800;text-shadow:0 2px 8px rgba(30,60,110,.5)}
+@media(max-width:520px){.lg-title{font-size:1.85rem}.lg-mascot{height:120px;opacity:.92}}
 /* ===== 演出 ===== */
 .ov{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .ov.on{display:flex}
-#gacha{background:#0B0B0E;color:#fff;overflow:hidden}
+#gacha{background:linear-gradient(rgba(8,8,14,.35),rgba(8,8,14,.55)),url("gacha_bg.jpg") center/cover,#0B0B0E;color:#fff;overflow:hidden}
 #gacha .env{font-size:6rem;animation:shake .5s infinite;cursor:pointer}
 @keyframes shake{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-4px)}}
 #gacha .hint{color:#9A9AA2;font-size:.8rem;margin-top:14px}
@@ -76,22 +102,23 @@
 <main>
 
 <section class="screen on" id="s-login">
-  <div class="pass" style="margin-top:14px">
-    <div class="pass-band"><span>OH!KOKU PASSPORT</span><span>Oh my teeth</span></div>
-    <div class="pass-body" style="display:block;text-align:center;padding:26px 16px">
-      <div style="font-size:2.4rem">🛂</div>
-      <div class="pass-name" style="font-size:1.2rem;margin-top:6px">Oh!国へようこそ</div>
-      <p style="font-size:.74rem;color:#A6A6AD;margin-top:6px">名札の市民番号で入国できます</p>
-    </div>
+  <div class="lg-logo">Oh!国<small>OH!KOKU PASSPORT</small></div>
+  <div class="lg-brand">Oh my teeth</div>
+  <img class="lg-mascot" src="mascot.png" alt="" onerror="this.remove()">
+  <div>
+    <div class="lg-crown"><img src="emblem.png" style="height:56px;filter:drop-shadow(0 3px 6px rgba(60,40,0,.4))" onerror="this.outerHTML='👑'"></div>
+    <h1 class="lg-title">Oh!国へようこそ</h1>
+    <p class="lg-copy">今日は、どんな仕事に出会う?<br><small>遊びながら、はたらくって、きっとおもしろい。</small></p>
   </div>
-  <div class="card">
+  <div class="parch">
     <label>市民番号</label>
-    <input id="l-no" inputmode="numeric" placeholder="名札に書いてある番号(例: 101)">
+    <input id="l-no" inputmode="numeric" placeholder="👤 名札に書いてある番号(例: 101)">
     <label>PIN(4桁の暗証番号)</label>
-    <input id="l-pin" inputmode="numeric" maxlength="4" placeholder="はじめての人は、ここで好きな4桁を決める">
-    <button class="btn pri" onclick="login()">入国する</button>
+    <input id="l-pin" inputmode="numeric" maxlength="4" placeholder="🔒 はじめての人は、好きな4桁を決める">
+    <button class="woodbtn" onclick="login()">入国する <span>▸</span></button>
     <p class="note">はじめて入力した4桁があなたのPINになります。忘れたら政府ブースでリセットできます。</p>
   </div>
+  <div class="lg-foot"><b>── OH!KOKU PASSPORT ──</b>SMALL ACTIONS MAKE A BIGGER TOMORROW</div>
 </section>
 
 <section class="screen" id="s-home">
@@ -181,7 +208,7 @@
 
 <div class="ov" id="gacha" onclick="gachaTap()">
   <div class="rays"></div><div class="flashw" id="gflash"></div>
-  <div id="genv"><div class="env">🧧</div><p class="hint">運命の封筒が届きました ── タップで開封</p></div>
+  <div id="genv"><div class="env"><img src="envelope.png" style="height:160px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))" onerror="this.outerHTML='🧧'"></div><p class="hint">運命の封筒が届きました ── タップで開封</p></div>
   <div class="res" id="gres">
     <div class="flbl">あなたの人生は……</div>
     <div class="fname" id="gname"></div>
@@ -210,7 +237,7 @@
   <div class="tik"><div class="th">OH!KOKU KEIBA</div><div class="tn" id="lose-t">—</div></div>
   <p style="margin-top:16px">残念……次のレースに期待</p>
 </div>
-<div class="ov" id="result-ov" style="background:rgba(10,10,12,.95)"></div>
+<div class="ov" id="result-ov" style="background:linear-gradient(rgba(25,15,25,.5),rgba(25,15,25,.72)),url('result_bg.jpg') center/cover,#0B0B0E"></div>
 <div class="band-ov" id="titleband"></div>
 <div class="popwrap" id="pop"><div class="pop">
   <span class="badge" id="pop-badge">Oh!国</span>
@@ -223,15 +250,16 @@ document.write(scanOverlayHTML());
 
 let me=null, sess=loadS("ohk_c"), lastNotif=0, firstMe=true;
 let prevBal=null, prevDepts=null, prevTitles=null, prevRush=false, prevDerby=null, prevPhase=null;
-const DEPTS=["DH","Lab","Medical","Growth","Tech","CS","Global","Sales","HR","経営"];
+let DEPTS=["DH","Lab","Medical","Growth","Tech","CS","Global","Sales","HR","経営"];
 const QUESTS=[
  ["rival","🥊","ライバル","ベイブレードで他部署の人と対戦",50,"①他部署の人を1人誘う ②ベイブレードブース(B05)で対戦する ③店長に2人の市民番号を伝えて記録してもらう ── これで2人とも達成!勝ち負けは関係ありません。"],
  ["table","☕️","相席","カフェで他部署の人と一緒に注文",30,"①他部署の人とカフェ(B02)へ ②2人ともドリンク等を注文 ③店長に2人の番号を伝えて記録 ── いちばん簡単なクエスト。休憩ついでにどうぞ。"],
- ["doubles","🏀","ダブルス","運動ブースで他部署の人とペア挑戦",50,"①他部署の人とペアを組む ②運動ブース(B08)でバスケか懸垂に挑戦 ③店長に2人の番号を伝えて記録 ── 成功失敗は問いません。挑戦すればOK。"],
+ ["doubles","🎯","ダブルス","縁日ゲームセンターで他部署の人とペア挑戦",50,"①他部署の人とペアを組む ②縁日ゲームセンター(B09)で射的・バスケ・懸垂などに挑戦 ③店長に2人の番号を伝えて記録 ── 成功失敗は問いません。"],
+ ["flower","💐","花を贈る","花屋で誰かに花を贈る",30,"①花屋(B06)で花を選ぶ ②店長に自分とお相手の番号を伝えて支払う ③相手のスマホに『あなたから花束が届きました』の通知が飛ぶ ── 部署も理由も問いません。日頃の感謝を、花で。"],
  ["jobhop","💼","転職王","3つの違うお店で勤務を完了する",50,"別々の3店舗で勤務(各12分)を完了すると自動で達成。初期勤務の店も1店にカウントされるので、転職解禁(43分)後にあと2店で働けばOK。"],
  ["allwork","👥","全員出勤","チームの出席者全員が自由勤務を完了",50,"あなたのチーム(パスポートに表示)の出席メンバー全員が、自由勤務(43分以降)を1回以上完了すると、チーム全員に自動で付与。声をかけあって全員働こう!"],
  ["coinvest","📈","共同投資","同じ市場で同じ銘柄を買った他部署の人がいる",30,"市場タイム中に株を買ったとき、同じ市場・同じ銘柄を他部署の誰かも買っていれば自動達成。「みんなでICEを買おう!」と示し合わせるのが近道。"]];
-const TITLE_DEF=[["neighbor","ご近所さん","友達5人"],["wellknown","顔が広い","友達10人"],["famous","Oh!国の有名人","友達20人"],["international","国際人","5部署の友達"],["master","Oh!国マスター","全クエスト達成"]];
+const TITLE_DEF=[["neighbor","ご近所さん","友達5人"],["wellknown","顔が広い","友達10人"],["famous","Oh!国の有名人","友達20人"],["international","国際人","5部署の友達"],["master","Oh!国マスター","クエスト6つ達成"]];
 
 /* ===== サウンド(合成・素材不要) ===== */
 let AC=null, MUTE=loadS("ohk_mute")||false;
@@ -316,10 +344,17 @@ function countTo(el,from,to,ms){
 }
 
 function enter(){
+  document.body.classList.remove("gate");
   $("s-login").classList.remove("on");
   $("s-home").classList.add("on");
   $("cnav").style.display="flex";
-  render(); startPoll();
+  loadDepts(); render(); startPoll();
+}
+async function loadDepts(){
+  try{
+    const ds=await tbl("department?select=id&order=id.asc");
+    if(ds&&ds.length){ DEPTS=ds.map(d=>d.id); render(); }
+  }catch(e){}
 }
 async function refresh(){
   if(!sess) return;
@@ -431,7 +466,7 @@ function render(){
   }).join("");
   // クエスト
   const done=me.quests||[];
-  $("qsum").innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline"><b>達成状況</b><span><span class="amt" style="font-size:1.3rem">'+done.length+'</span><span class="note" style="display:inline"> / 6</span></span></div><div class="gauge" style="margin-top:8px;height:10px"><div style="width:'+(done.length/6*100)+'%"></div></div><p class="note">全部達成で称号「Oh!国マスター」+100コイン</p>';
+  $("qsum").innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline"><b>達成状況</b><span><span class="amt" style="font-size:1.3rem">'+done.length+'</span><span class="note" style="display:inline"> / '+QUESTS.length+'</span></span></div><div class="gauge" style="margin-top:8px;height:10px"><div style="width:'+(done.length/QUESTS.length*100)+'%"></div></div><p class="note">6つ達成で称号「Oh!国マスター」+100コイン</p>';
   $("quests").innerHTML=QUESTS.map(q=>{
     const d=done.includes(q[0]);
     return '<div class="quest'+(d?" done":"")+'" style="cursor:pointer" onclick="qdetail(\''+q[0]+'\')"><div class="ic'+(d?"":" g")+'">'+q[1]+'</div><div class="qm"><div class="qn">'+q[2]+'</div><p class="note">'+q[3]+' <span style="color:var(--ac)">▸ タップでやり方</span></p></div><span class="tag '+(d?'red">+'+q[4]+' 達成':'gray">+'+q[4])+'</span></div>';
@@ -469,8 +504,10 @@ function qdetail(code){
 const FINFO={
  F03:"☕️ ペアクエスト「相席」対象店:他部署の人と一緒に注文して店長に記録してもらおう(+30/人)",
  F06:"🥊 ペアクエスト「ライバル」対象店:他部署の人と対戦して記録(+50/人)",
- F10:"🏀 ペアクエスト「ダブルス」対象店:他部署の人とペア挑戦で記録(+50/人)",
- F11:"🏇 ダービーの投票券もここで販売(開催中のみ)。コインゲームで一攫千金を狙え",
+ F08:"💐 クエスト「花を贈る」対象店:誰かに花を贈ると、相手のスマホに通知が届きます(+30)",
+ F09:"🍵 茶葉を選んで自分だけのブレンド茶づくり。一服セットで休憩にも。利き茶で賞金も",
+ F10:"🌸 香りを調合して持ち帰れる、大人の実験室",
+ F11:"🎯 射的・輪投げ・バスケ・懸垂・コインゲームの総合娯楽場。ダービーの投票券もここ。ペアクエスト「ダブルス」対象店",
  F01:"🍱 昼休み限定営業。基本弁当は無料・1人1個!アップグレードは早い者勝ち",
  F02:"🍨 開国87分(自由勤務2)から開店のスペシャル店",
  F12:"🔮 何が聞けるかは、占い師のみぞ知る…",
@@ -660,6 +697,7 @@ async function showResult(){
   }catch(e){ toast(e.message,1); }
 }
 
+document.body.classList.add("gate");
 (async()=>{
   if(sess){ try{ me=await rpc("rpc_me",{p_no:sess.no,p_pin:sess.pin}); enter(); }catch(e){ clearS("ohk_c"); } }
 })();
