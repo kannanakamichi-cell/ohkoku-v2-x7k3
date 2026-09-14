@@ -13,7 +13,7 @@
 body.gate header,body.gate nav{display:none}
 body.gate{padding-bottom:0}
 body.gate main{max-width:none;padding:0}
-#s-login{min-height:100vh;background-image:url('bg.jpg'),linear-gradient(180deg,#7EC4EE 0%,#A8DCF5 45%,#CBEAD2 78%,#9CC98F 100%);background-size:cover;background-position:center 30%;display:none;flex-direction:column;align-items:center;justify-content:center;padding:34px 18px 46px;position:relative}
+#s-login{min-height:100vh;background:url('bg.png') center bottom/cover no-repeat,linear-gradient(180deg,#7EC4EE 0%,#A8DCF5 55%,#D8EEC9 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:34px 18px 46px;position:relative}
 #s-login.on{display:flex}
 .lg-title{font-family:"Yusei Magic",sans-serif;color:#fff;font-size:2.4rem;letter-spacing:.04em;text-shadow:0 3px 0 rgba(60,90,140,.35),0 8px 22px rgba(30,60,110,.4);text-align:center;line-height:1.2}
 .lg-crown{text-align:center;font-size:1.8rem;filter:drop-shadow(0 3px 6px rgba(120,90,0,.4))}
@@ -36,7 +36,7 @@ body.gate main{max-width:none;padding:0}
 /* ===== 演出 ===== */
 .ov{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .ov.on{display:flex}
-#gacha{background:linear-gradient(rgba(8,8,14,.35),rgba(8,8,14,.55)),url("gacha_bg.jpg") center/cover,#0B0B0E;color:#fff;overflow:hidden}
+#gacha{background:url('gacha_bg.png') center/auto 92% no-repeat,radial-gradient(ellipse at 50% 30%,#1A1A3A,#07070E 75%);color:#fff;overflow:hidden}
 #gacha .env{font-size:6rem;animation:shake .5s infinite;cursor:pointer}
 @keyframes shake{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-4px)}}
 #gacha .hint{color:#9A9AA2;font-size:.8rem;margin-top:14px}
@@ -46,6 +46,17 @@ body.gate main{max-width:none;padding:0}
 #gacha.t4 .rays{display:block;background:conic-gradient(#8a6d1a,#E8C64F,#8a6d1a,#E8C64F,#8a6d1a)}
 #gacha.t3 .rays{display:block;background:conic-gradient(#333,#666,#333,#666,#333)}
 #gacha .res{position:relative;z-index:2;display:none}
+#gacha.art .rays{display:none!important}
+#gacha.art{justify-content:flex-end}
+#gacha.art .res{padding-bottom:7vh}
+#gacha.art #gstars{display:none}
+#gacha.art .flbl{color:#D9D9E2}
+#friend-ov{background:rgba(15,10,10,.92)}
+#friend-ov .fs{width:130px;height:130px;border:6px solid var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.2rem;background:#FFF3F0;transform:rotate(-8deg);animation:stpop .55s cubic-bezier(.2,2,.4,1);margin:0 auto 16px;box-shadow:0 10px 30px rgba(226,59,46,.5)}
+#friend-ov .fb{font-family:"Yusei Magic",sans-serif;font-size:2rem;color:#fff;text-shadow:0 3px 12px rgba(226,59,46,.6)}
+#friend-ov .fn2{color:#FFD9D3;font-size:1rem;margin-top:8px;font-weight:800}
+.combo-card{display:inline-block;background:#FFF6E0;color:#4A3418;border-radius:14px;padding:12px 18px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:stpop .5s cubic-bezier(.2,2,.4,1)}
+.combo-card b{font-family:"Yusei Magic",sans-serif;font-size:1.3rem;display:block;margin:3px 0 4px}
 #gacha .res .fname{font-size:2rem;font-weight:800;margin:10px 0 4px}
 #gacha .res .famt{font-size:2.6rem;font-weight:800;font-variant-numeric:tabular-nums}
 #gacha .res .flbl{color:#9A9AA2;font-size:.78rem}
@@ -143,6 +154,14 @@ body.gate main{max-width:none;padding:0}
     <button class="btn dark" onclick="showResult()">あなたのOh!国人生を見る</button>
   </div>
   <div class="card" id="shiftCard" style="display:none"></div>
+  <div class="card">
+    <b style="font-size:.86rem">📰 ニュース投稿</b>
+    <p class="note">いま見た事件・スクープを一言で(60字)。メディア局が採用すると大型画面で全国放送!</p>
+    <div class="row">
+      <input id="newsBody" maxlength="60" placeholder="例: カフェで相席ブーム発生中">
+      <button class="btn mini dark" onclick="newsSubmit()">送る</button>
+    </div>
+  </div>
   <h2 class="sec">お知らせ</h2>
   <div class="card feed" id="notif"><p class="note">まだお知らせはありません。</p></div>
 </section>
@@ -170,6 +189,10 @@ body.gate main{max-width:none;padding:0}
 </section>
 
 <section class="screen" id="s-frd">
+  <div class="card" style="text-align:center">
+    <div class="qr" id="myqr2" style="display:inline-block"></div>
+    <p class="note">あなたのQR ── 相手の「📷 QR」でこれを読んでもらえば、番号入力なしで申請できます</p>
+  </div>
   <div class="card">
     <b style="font-size:.9rem;display:flex;align-items:center">🤝 友達をつくる<button class="qh" onclick="help('friend')">?</button></b>
     <p class="note">お互いに相手の番号を入力すると成立。片方だけなら相手に通知が届き、3分以内にOKで成立します。</p>
@@ -188,6 +211,8 @@ body.gate main{max-width:none;padding:0}
     <div class="stampgrid" id="fdepts"></div>
     <p class="note">他部署の友達でスタンプが埋まる。5部署で称号「国際人」+200コイン!</p>
   </div>
+  <h2 class="sec">友達リスト</h2>
+  <div class="card list" id="flist"><p class="note">まだいません。最初のひとりを見つけよう!</p></div>
   <h2 class="sec">称号<button class="qh" onclick="help('title')">?</button><span class="note" style="margin:0 0 0 auto;font-weight:400">行をタップで条件</span></h2>
   <div class="card list" id="titles"></div>
 </section>
@@ -237,7 +262,8 @@ body.gate main{max-width:none;padding:0}
   <div class="tik"><div class="th">OH!KOKU KEIBA</div><div class="tn" id="lose-t">—</div></div>
   <p style="margin-top:16px">残念……次のレースに期待</p>
 </div>
-<div class="ov" id="result-ov" style="background:linear-gradient(rgba(25,15,25,.5),rgba(25,15,25,.72)),url('result_bg.jpg') center/cover,#0B0B0E"></div>
+<div class="ov" id="result-ov" style="background:url('result_bg.png') center bottom/contain no-repeat,linear-gradient(180deg,#3A2140,#150F1E 70%)"></div>
+<div class="ov" id="friend-ov" onclick="this.classList.remove('on')"></div>
 <div class="band-ov" id="titleband"></div>
 <div class="popwrap" id="pop"><div class="pop">
   <span class="badge" id="pop-badge">Oh!国</span>
@@ -250,12 +276,15 @@ document.write(scanOverlayHTML());
 
 let me=null, sess=loadS("ohk_c"), lastNotif=0, firstMe=true;
 let prevBal=null, prevDepts=null, prevTitles=null, prevRush=false, prevDerby=null, prevPhase=null;
-let DEPTS=["DH","Lab","Medical","Growth","Tech","CS","Global","Sales","HR","経営"];
+let DEPTS=["Sales","Lab","Medical","Growth","Tech","CS","Global","HR","経営"];
 const QUESTS=[
  ["rival","🥊","ライバル","ベイブレードで他部署の人と対戦",50,"①他部署の人を1人誘う ②ベイブレードブース(B05)で対戦する ③店長に2人の市民番号を伝えて記録してもらう ── これで2人とも達成!勝ち負けは関係ありません。"],
  ["table","☕️","相席","カフェで他部署の人と一緒に注文",30,"①他部署の人とカフェ(B02)へ ②2人ともドリンク等を注文 ③店長に2人の番号を伝えて記録 ── いちばん簡単なクエスト。休憩ついでにどうぞ。"],
  ["doubles","🎯","ダブルス","縁日ゲームセンターで他部署の人とペア挑戦",50,"①他部署の人とペアを組む ②縁日ゲームセンター(B09)で射的・バスケ・懸垂などに挑戦 ③店長に2人の番号を伝えて記録 ── 成功失敗は問いません。"],
  ["flower","💐","花を贈る","花屋で誰かに花を贈る",30,"①花屋(B06)で花を選ぶ ②店長に自分とお相手の番号を伝えて支払う ③相手のスマホに『あなたから花束が届きました』の通知が飛ぶ ── 部署も理由も問いません。日頃の感謝を、花で。"],
+ ["uranai","🔮","運命の2人","他部署の友達と相性鑑定を受ける",30,"①他部署の友達と占いの館(B07)へ ②「相性鑑定」の会計 ③占い師に2人の番号を伝える ── コンビ名と相性%が明かされ、2人ともクエスト達成。友達になってからどうぞ。"],
+ ["derby","🏇","勝負師","ダービーの投票券を買う",30,"縁日ゲームセンター(B09)で投票券(1枠100コイン)を買うだけで達成。同僚6人の中から勝ち馬を見抜け。的中なら3倍!"],
+ ["news","📰","情報屋","メディア局にニュースを提供する",30,"ホーム画面の「📰 ニュース投稿」から、いま見た面白い出来事を一言(60字以内)。採用されると大型画面で全国放送されます。初投稿で達成!"],
  ["jobhop","💼","転職王","3つの違うお店で勤務を完了する",50,"別々の3店舗で勤務(各12分)を完了すると自動で達成。初期勤務の店も1店にカウントされるので、転職解禁(43分)後にあと2店で働けばOK。"],
  ["allwork","👥","全員出勤","チームの出席者全員が自由勤務を完了",50,"あなたのチーム(パスポートに表示)の出席メンバー全員が、自由勤務(43分以降)を1回以上完了すると、チーム全員に自動で付与。声をかけあって全員働こう!"],
  ["coinvest","📈","共同投資","同じ市場で同じ銘柄を買った他部署の人がいる",30,"市場タイム中に株を買ったとき、同じ市場・同じ銘柄を他部署の誰かも買っていれば自動達成。「みんなでICEを買おう!」と示し合わせるのが近道。"]];
@@ -294,6 +323,7 @@ document.querySelectorAll("nav button").forEach(b=>{
     $("s-"+b.dataset.s).classList.add("on");
     if(b.dataset.s==="work") renderFacilities();
     if(b.dataset.s==="mkt"){ renderMarket(); renderDerby(); renderLottery(); }
+    if(b.dataset.s==="frd") renderFriends();
   };
 });
 
@@ -314,6 +344,11 @@ function showGacha(){ gachaStage=1; $("gacha").className="ov on"; $("genv").styl
 function gachaTap(){
   if(gachaStage!==1)return; gachaStage=2;
   const t=tier(me.me.fortune);
+  const g=$("gacha");
+  const art=new Image();
+  art.onload=function(){ g.classList.add("art");
+    g.style.background="linear-gradient(rgba(5,5,10,0) 42%,rgba(5,5,10,.8) 78%),url('fortune"+t+".jpg') center/cover,#07070E"; };
+  art.src="fortune"+t+".jpg";
   $("gflash").classList.add("go"); setTimeout(()=>$("gflash").classList.remove("go"),600);
   vib(t>=4?[150,60,150,60,300]:(t===1?[400]:[120]));
   setTimeout(()=>{
@@ -336,7 +371,7 @@ function gachaTap(){
     countTo($("gamt"),0,me.me.initialAsset||1000,900);
   },350);
 }
-function gachaClose(ev){ ev.stopPropagation(); saveS("gacha_"+sess.no,1); $("gacha").className="ov"; enter(); }
+function gachaClose(ev){ ev.stopPropagation(); saveS("gacha_"+sess.no,1); const g=$("gacha"); g.className="ov"; g.style.background=""; enter(); }
 function countTo(el,from,to,ms){
   const st=performance.now();
   function f(now){ const p=Math.min(1,(now-st)/ms); el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-p,3)))); if(p<1)requestAnimationFrame(f); }
@@ -378,7 +413,7 @@ function render(){
   $("mymeta").textContent=m.dept+(m.team?" ／ チーム"+m.team:"")+" ／ "+m.grp+"組";
   $("myno2").textContent="NO. "+m.no;
   $("myfortune").textContent=(m.fortune||"🙂 ふつう")+"(初期 "+fmt(m.initialAsset)+")";
-  if(window.QRCode){ const q=$("myqr"); if(q.dataset.no!==m.no){ q.innerHTML=""; new QRCode(q,{text:"OHK:"+m.no,width:78,height:78}); q.dataset.no=m.no; } }
+  if(window.QRCode){ ["myqr","myqr2"].forEach(id=>{ const q=$(id); if(q&&q.dataset.no!==m.no){ q.innerHTML=""; new QRCode(q,{text:"OHK:"+m.no,width:id==="myqr"?78:130,height:id==="myqr"?78:130}); q.dataset.no=m.no; } }); }
   // 残高:数字ロール+チャリン+コインの雨
   const balEl=$("bal");
   if(prevBal===null||firstMe){ balEl.textContent=fmt(me.balance); }
@@ -447,8 +482,8 @@ function render(){
   $("fcount").textContent=me.friends||0;
   const fd=me.friendDepts||[];
   let newDept=null;
-  if(prevDepts&&fd.length>prevDepts.length&&!firstMe){ newDept=fd.find(d=>!prevDepts.includes(d)); S.stamp(); vib([80]); }
-  else if(prevDepts&&(me.friends||0)>prevFriends&&!firstMe){ S.stamp(); }
+  if(prevDepts&&fd.length>prevDepts.length&&!firstMe){ newDept=fd.find(d=>!prevDepts.includes(d)); }
+  if(prevDepts&&(me.friends||0)>prevFriends&&!firstMe){ friendCelebrate(); }
   $("fdepts").innerHTML=DEPTS.map(d=>'<div class="stamp'+(fd.includes(d)?" got":"")+(d===newDept?" newget":"")+'">'+d+'</div>').join("");
   prevDepts=fd.slice(); prevFriends=me.friends||0;
   // 称号:金帯演出
@@ -543,16 +578,50 @@ async function approve(id,ok){
 }
 async function frespond(id,ok){
   try{ await rpc("rpc_friend_respond",{p_no:sess.no,p_pin:sess.pin,p_fid:id,p_accept:ok});
-    if(ok){ S.stamp(); vib([80,40,80]); toast("友達になりました 🤝"); } else toast("見送りました");
+    if(ok){ friendCelebrate(); } else toast("見送りました");
     refresh();
   }catch(e){ toast(e.message,1); refresh(); }
+}
+async function renderFriends(){
+  try{
+    const fl=await rpc("rpc_friends",{p_no:sess.no,p_pin:sess.pin});
+    $("flist").innerHTML=(fl&&fl.length)? fl.map(f=>'<div><span><b>'+f.name+'</b> <span class="note" style="display:inline">'+f.dept+' ── No.'+f.no+'</span></span><span class="tag soft">🤝</span></div>').join("") : '<p class="note">まだいません。最初のひとりを見つけよう!</p>';
+    return fl;
+  }catch(e){ return null; }
+}
+const COMBO_A=["無敵の","伝説の","昼寝する","経費で落ちない","国家公認","秘密結社","歯みがき上手な","残業しない","縁の下の","優勝候補の"];
+const COMBO_B=["ツインズ","同盟","商事","探検隊","兄弟","カンパニー","戦線","倶楽部","デュオ","組合"];
+function comboOf(a,b){
+  const x=Math.min(+a,+b)*131+Math.max(+a,+b)*17;
+  return { name: COMBO_A[x%10]+COMBO_B[Math.floor(x/10)%10], love: 55+(x%46) };
+}
+async function friendCelebrate(){
+  const fl=await renderFriends();
+  const nw=fl&&fl[0]; if(!nw) return;
+  const c=comboOf(sess.no,nw.no);
+  $("friend-ov").innerHTML='<div><div class="fs">🤝</div><div class="fb">友達成立!!</div><div class="fn2">'+nw.name+' さん('+nw.dept+')</div><div id="fo-combo" style="min-height:86px;margin-top:14px"></div><p class="note" style="color:#C9A9A4;margin-top:6px">タップで閉じる ── スタンプ帳も確認しよう</p></div>';
+  $("friend-ov").classList.add("on");
+  S.stamp(); setTimeout(()=>S.win(),260); rain(["🤝","✨"],14); vib([80,50,80,50,180]);
+  setTimeout(()=>{
+    const el=$("fo-combo"); if(!el) return;
+    el.innerHTML='<div class="combo-card">👥 コンビ名 決定<b>『'+c.name+'』</b>相性 <span style="letter-spacing:.1em">??</span>% <span style="font-size:.72rem;display:block;margin-top:4px;color:#8A6A3A">🔮 2人の相性は「占いの館」で鑑定できます</span></div>';
+    S.coin();
+  },1000);
+  setTimeout(()=>$("friend-ov").classList.remove("on"),6000);
 }
 async function friendReq(){
   const t=$("f-no").value.trim(); if(!t) return toast("相手の番号を入力してください",1);
   try{ const r=await rpc("rpc_friend_request",{p_no:sess.no,p_pin:sess.pin,p_target:t});
     $("f-no").value="";
-    if(r.result==="accepted"){ S.stamp(); vib([80,40,80]); toast("友達成立!🎉"); }
+    if(r.result==="accepted"){ friendCelebrate(); }
     else toast("申請を送りました。相手があなたの番号("+sess.no+")を入れれば成立");
+    refresh();
+  }catch(e){ toast(e.message,1); }
+}
+async function newsSubmit(){
+  const b=$("newsBody").value.trim(); if(!b) return toast("内容を入力してください",1);
+  try{ await rpc("rpc_news_submit",{p_no:sess.no,p_pin:sess.pin,p_body:b});
+    $("newsBody").value=""; toast("📰 メディア局に届けました!採用をお楽しみに");
     refresh();
   }catch(e){ toast(e.message,1); }
 }

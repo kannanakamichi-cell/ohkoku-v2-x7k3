@@ -32,6 +32,7 @@ main{max-width:1100px;padding:34px}
   </div>
   <div class="card" id="mkt"></div>
   <div class="card" id="derby" style="display:none"></div>
+  <div class="card" id="newsS" style="display:none"></div>
   <div class="card" id="board" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:baseline">
       <b style="font-size:20px" id="bd-title">👑 リアルタイム番付</b>
@@ -102,6 +103,13 @@ async function loop(){
             return '<div style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid #2A2A30'+(win?';color:#F3D97E':'')+'"><b style="width:46px">'+r.name.slice(-1)+'枠</b><span style="flex:1;font-size:20px;font-weight:800">'+(r.runner||"—")+(win?" 🏆 WIN":"")+'</span><span class="note">'+r.votes+'票</span><div style="width:220px" class="gauge"><div style="width:'+(r.votes/maxV*100)+'%"></div></div></div>';
           }).join("");
       } else box.style.display="none";
+    }catch(e){}
+    try{
+      const nw=await tbl("news?select=name,body,aired_at&status=eq.aired&order=aired_at.desc&limit=3");
+      const nb=document.getElementById("newsS");
+      if(nw&&nw.length){ nb.style.display="block";
+        nb.innerHTML='<b style="font-size:18px">📰 Oh!国ニュース</b>'+nw.map(n=>'<div style="padding:7px 0;border-bottom:1px solid #2A2A30"><span style="font-size:21px;font-weight:800">'+n.body+'</span> <span class="note">── 提供:'+n.name+'</span></div>').join("");
+      } else nb.style.display="none";
     }catch(e){}
     // リアルタイム番付(集計以降は表彰の発表まで隠す)
     const hideBoard=["TALLY","RESULTS","CLOSED"].includes(c.ph.id) || !ev.opened_at;

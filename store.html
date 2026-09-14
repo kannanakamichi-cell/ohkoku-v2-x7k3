@@ -83,6 +83,27 @@
     </div>
   </div>
 
+  <div id="newsBox" style="display:none">
+    <h2 class="sec">📰 報道デスク(メディア局)</h2>
+    <div class="card">
+      <p class="note">市民から届いたニュース。「📡 配信」で大型画面に流れます(最新3本が表示)。</p>
+      <div class="list" id="newsList">受信待ち…</div>
+    </div>
+  </div>
+
+  <div id="uraBox" style="display:none">
+    <h2 class="sec">🔮 相性鑑定(占い師専用)</h2>
+    <div class="card">
+      <p class="note">先に「相性鑑定」の会計を済ませてから、2人の番号で鑑定。結果は口頭で、たっぷり溜めて発表してください。</p>
+      <div class="row">
+        <input id="u1" inputmode="numeric" placeholder="1人目の番号">
+        <input id="u2" inputmode="numeric" placeholder="2人目の番号">
+      </div>
+      <button class="btn pri" onclick="uranai()">🔮 鑑定する</button>
+      <div id="u-out" style="margin-top:10px"></div>
+    </div>
+  </div>
+
   <div id="bankBox" style="display:none">
     <h2 class="sec">🏦 銀行窓口</h2>
     <div class="card">
@@ -132,6 +153,8 @@ async function enter(){
   if(PAIR[FID]){ $("pairBox").style.display="block"; $("pairdesc").textContent=PAIR[FID]; }
   if(FID==="F13"){ $("bankBox").style.display="block"; const bs=loadS("ohk_b"); if(bs)$("b-key").value=bs.k; }
   if(FID==="F08"){ $("giftBox").style.display="block"; }
+  if(FID==="F12"){ $("uraBox").style.display="block"; }
+  if(FID==="F15"){ $("newsBox").style.display="block"; loadNews(); setInterval(loadNews,8000); }
   await loadProds(); poll(); setInterval(poll,5000);
 }
 async function loadProds(){
@@ -191,6 +214,31 @@ async function gift(){
     toast("💐 お届けしました!相手のスマホに通知が飛びます");
     $("g-from").value="";$("g-to").value=""; loadProds();
   }catch(e){ toast(e.message,1); }
+}
+const COMBO_A=["無敵の","伝説の","昼寝する","経費で落ちない","国家公認","秘密結社","歯みがき上手な","残業しない","縁の下の","優勝候補の"];
+const COMBO_B=["ツインズ","同盟","商事","探検隊","兄弟","カンパニー","戦線","倶楽部","デュオ","組合"];
+async function loadNews(){
+  try{
+    const ns=await rpc("rpc_news_list",{p_key:KEY});
+    $("newsList").innerHTML=(ns&&ns.length)? ns.map(n=>'<div><span><b>'+n.body+'</b><span class="note" style="display:block">提供:'+n.name+'('+n.citizen_no+')</span></span>'+(n.status==="aired"?'<span class="tag gray">配信済</span>':'<button class="btn mini pri" onclick="airNews('+n.id+')">📡 配信</button>')+'</div>').join("") : '<p class="note">まだ届いていません</p>';
+  }catch(e){}
+}
+async function airNews(id){
+  try{ await rpc("rpc_news_air",{p_key:KEY,p_id:id}); toast("📡 全国放送しました!"); loadNews(); }
+  catch(e){ toast(e.message,1); }
+}
+function uranai(){
+  const a=$("u1").value.trim(), b=$("u2").value.trim();
+  if(!a||!b) return toast("2人の番号を入力",1);
+  rpc("rpc_uranai",{p_key:KEY,p_no1:a,p_no2:b}).then(r=>{ if(r&&r.quest) toast("⭐️ 2人にクエスト達成を記録しました"); }).catch(e=>toast(e.message,1));
+  const x=Math.min(+a,+b)*131+Math.max(+a,+b)*17;
+  const name=COMBO_A[x%10]+COMBO_B[Math.floor(x/10)%10];
+  const love=55+(x%46);
+  const msg=love>=90?"✨ 奇跡の相性!今日この2人が出会ったのは運命です":
+            love>=75?"💫 好相性。一緒に商売をすると成功するでしょう":
+            love>=65?"🌤 悪くない縁。共同投資で運気が上がりそう":
+                     "🌱 伸びしろしかない関係。まずはカフェで相席を";
+  $("u-out").innerHTML='<div class="card" style="text-align:center;border-color:var(--ac)"><span class="note">コンビ名『'+name+'』</span><div style="font-size:2.2rem;font-weight:800;color:var(--ac)">相性 '+love+'%</div><p class="note">'+msg+'</p></div>';
 }
 async function bank(kind,sign){
   const bk=$("b-key").value.trim(), no=$("b-no").value.trim();
