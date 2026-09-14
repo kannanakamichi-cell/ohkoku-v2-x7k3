@@ -51,6 +51,9 @@ body.gate main{max-width:none;padding:0}
 #gacha.art .res{padding-bottom:7vh}
 #gacha.art #gstars{display:none}
 #gacha.art .flbl{color:#D9D9E2}
+@media(min-width:700px){
+  #gacha.art{background-size:auto 100vh!important;background-repeat:no-repeat!important;background-position:center!important}
+}
 #friend-ov{background:rgba(15,10,10,.92)}
 #friend-ov .fs{width:130px;height:130px;border:6px solid var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.2rem;background:#FFF3F0;transform:rotate(-8deg);animation:stpop .55s cubic-bezier(.2,2,.4,1);margin:0 auto 16px;box-shadow:0 10px 30px rgba(226,59,46,.5)}
 #friend-ov .fb{font-family:"Yusei Magic",sans-serif;font-size:2rem;color:#fff;text-shadow:0 3px 12px rgba(226,59,46,.6)}
@@ -164,6 +167,7 @@ body.gate main{max-width:none;padding:0}
   </div>
   <h2 class="sec">お知らせ</h2>
   <div class="card feed" id="notif"><p class="note">まだお知らせはありません。</p></div>
+  <button class="btn ghost" onclick="logout()" style="margin-top:6px">🚪 退出する(別の番号で入国し直す)</button>
 </section>
 
 <section class="screen" id="s-work">
@@ -293,7 +297,7 @@ const TITLE_DEF=[["neighbor","ご近所さん","友達5人"],["wellknown","顔�
 /* ===== サウンド(合成・素材不要) ===== */
 let AC=null, MUTE=loadS("ohk_mute")||false;
 $("mute")&&($("mute").textContent=MUTE?"🔇":"🔊");
-function toggleMute(){ MUTE=!MUTE; saveS("ohk_mute",MUTE); $("mute").textContent=MUTE?"🔇":"🔊"; }
+function toggleMute(){ MUTE=!MUTE; saveS("ohk_mute",MUTE); $("mute").textContent=MUTE?"🔇":"🔊"; if(BGM){ MUTE?BGM.pause():BGM.play().catch(()=>{}); } }
 function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); return AC; }
 function tone(f,t0,dur,type,vol){ if(MUTE)return; const a=ac(); if(!a)return;
   const o=a.createOscillator(),g=a.createGain(); o.type=type||"sine"; o.frequency.value=f;
@@ -309,6 +313,21 @@ const S={
   win(){ [784,988,1175,1568].forEach((f,i)=>tone(f,i*.1,.35,"triangle",.2)); }
 };
 function vib(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} }
+/* 入国BGM: リポジトリに bgm.mp3 があれば再生、無ければ王国ファンファーレ */
+let BGM=null;
+function royalFanfare(){
+  [392,523,659,784].forEach((f,i)=>tone(f,i*.14,.4,"triangle",.2));
+  [784,988,1175,1568].forEach((f,i)=>tone(f,.7+i*.12,.5,"triangle",.22));
+  for(let i=0;i<6;i++) tone(130,i*.14,.1,"square",.12);
+}
+function playEntryMusic(){
+  if(MUTE) return;
+  try{
+    BGM=new Audio("bgm.mp3"); BGM.loop=true; BGM.volume=.45;
+    BGM.play().catch(()=>{ BGM=null; royalFanfare(); });
+  }catch(e){ BGM=null; royalFanfare(); }
+}
+function stopBGM(){ if(BGM){ try{BGM.pause();}catch(e){} BGM=null; } }
 function rain(chars,n){ for(let i=0;i<(n||18);i++){ const s=document.createElement("span"); s.className="fl";
   s.textContent=chars[i%chars.length]; s.style.left=(Math.random()*100)+"%";
   s.style.animationDuration=(1.4+Math.random()*1.6)+"s"; s.style.animationDelay=(Math.random()*.5)+"s";
@@ -334,6 +353,7 @@ async function login(){
   ac();
   try{
     me = await rpc("rpc_login",{p_no:no,p_pin:pin});
+    playEntryMusic();
     saveS("ohk_c",{no,pin}); sess={no,pin};
     if(!loadS("gacha_"+no)){ showGacha(); } else enter();
   }catch(e){ toast(e.message,1); }
@@ -371,7 +391,7 @@ function gachaTap(){
     countTo($("gamt"),0,me.me.initialAsset||1000,900);
   },350);
 }
-function gachaClose(ev){ ev.stopPropagation(); saveS("gacha_"+sess.no,1); const g=$("gacha"); g.className="ov"; g.style.background=""; enter(); }
+function gachaClose(ev){ ev.stopPropagation(); saveS("gacha_"+sess.no,1); const g=$("gacha"); g.className="ov"; g.style.background=""; stopBGM(); enter(); }
 function countTo(el,from,to,ms){
   const st=performance.now();
   function f(now){ const p=Math.min(1,(now-st)/ms); el.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-p,3)))); if(p<1)requestAnimationFrame(f); }
@@ -379,6 +399,7 @@ function countTo(el,from,to,ms){
 }
 
 function enter(){
+  stopBGM();
   document.body.classList.remove("gate");
   $("s-login").classList.remove("on");
   $("s-home").classList.add("on");
@@ -465,7 +486,7 @@ function render(){
     al+='<div class="urgent"><h4>💳 支払いの確認</h4><p class="note" style="color:#6A4A4F">'+t.note+' ── <b style="font-size:1rem;color:var(--ink)">'+fmt(t.amount)+'コイン</b>(60秒以内)</p><div class="row"><button class="btn pri" style="margin-top:9px" onclick="approve('+t.id+',true)">支払う</button><button class="btn ghost" style="margin-top:9px" onclick="approve('+t.id+',false)">やめる</button></div></div>';
   });
   (me.pendingFriend||[]).forEach(f=>{
-    al+='<div class="urgent"><h4>🤝 '+f.from+'さんから友達申請</h4><div class="row"><button class="btn pri" style="margin-top:9px" onclick="frespond('+f.id+',true)">OK!</button><button class="btn ghost" style="margin-top:9px" onclick="frespond('+f.id+',false)">ごめん</button></div></div>';
+    al+='<div class="urgent"><h4>🤝 '+f.from+'さんから友達申請</h4><div class="row"><button class="btn pri" style="margin-top:9px" onclick="frespond('+f.id+',true,\''+f.no+'\')">OK!</button><button class="btn ghost" style="margin-top:9px" onclick="frespond('+f.id+',false)">ごめん</button></div></div>';
   });
   $("alerts").innerHTML=al;
   // リザルト導線
@@ -576,7 +597,8 @@ async function approve(id,ok){
     toast(ok?"支払いました ✅":"キャンセルしました"); refresh();
   }catch(e){ toast(e.message,1); refresh(); }
 }
-async function frespond(id,ok){
+async function frespond(id,ok,no){
+  if(no) lastFriendNo=no;
   try{ await rpc("rpc_friend_respond",{p_no:sess.no,p_pin:sess.pin,p_fid:id,p_accept:ok});
     if(ok){ friendCelebrate(); } else toast("見送りました");
     refresh();
@@ -595,9 +617,11 @@ function comboOf(a,b){
   const x=Math.min(+a,+b)*131+Math.max(+a,+b)*17;
   return { name: COMBO_A[x%10]+COMBO_B[Math.floor(x/10)%10], love: 55+(x%46) };
 }
+let lastFriendNo=null;
 async function friendCelebrate(){
   const fl=await renderFriends();
-  const nw=fl&&fl[0]; if(!nw) return;
+  let nw=fl&&fl[0];
+  if(!nw){ if(!lastFriendNo) return; nw={no:lastFriendNo,name:"新しい友達",dept:"—"}; }
   const c=comboOf(sess.no,nw.no);
   $("friend-ov").innerHTML='<div><div class="fs">🤝</div><div class="fb">友達成立!!</div><div class="fn2">'+nw.name+' さん('+nw.dept+')</div><div id="fo-combo" style="min-height:86px;margin-top:14px"></div><p class="note" style="color:#C9A9A4;margin-top:6px">タップで閉じる ── スタンプ帳も確認しよう</p></div>';
   $("friend-ov").classList.add("on");
@@ -613,10 +637,14 @@ async function friendReq(){
   const t=$("f-no").value.trim(); if(!t) return toast("相手の番号を入力してください",1);
   try{ const r=await rpc("rpc_friend_request",{p_no:sess.no,p_pin:sess.pin,p_target:t});
     $("f-no").value="";
-    if(r.result==="accepted"){ friendCelebrate(); }
+    if(r.result==="accepted"){ lastFriendNo=t; friendCelebrate(); }
     else toast("申請を送りました。相手があなたの番号("+sess.no+")を入れれば成立");
     refresh();
   }catch(e){ toast(e.message,1); }
+}
+function logout(){
+  if(!confirm("退出します。次に使うときは番号とPINで入国し直してください(PINは保存されています)。よろしいですか?")) return;
+  clearS("ohk_c"); location.reload();
 }
 async function newsSubmit(){
   const b=$("newsBody").value.trim(); if(!b) return toast("内容を入力してください",1);
